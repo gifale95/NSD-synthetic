@@ -94,10 +94,10 @@ for s in range(len(args.subjects)):
 	# Load the explained variance scores
 	lh_data = copy(results['lh_explained_variance_nsdcore_test_284'][s])
 	rh_data = copy(results['rh_explained_variance_nsdcore_test_284'][s])
-	# Remove vertices with noise ceiling values below a certain threshold,
-	# since they cannot be interpreted in terms of modeling
-	lh_idx = results['lh_nc_nsdcore_test_284'][s] < 0.3
-	rh_idx = results['rh_nc_nsdcore_test_284'][s] < 0.3
+	# Remove vertices with noise ceiling values below a threshold, since they
+	# cannot be interpreted in terms of modeling
+	lh_idx = results['lh_nc_nsdcore_test_284'][s] < 0.2
+	rh_idx = results['rh_nc_nsdcore_test_284'][s] < 0.2
 	lh_data[lh_idx] = np.nan
 	rh_data[rh_idx] = np.nan
 	# Store the data
@@ -169,10 +169,10 @@ for s in range(len(args.subjects)):
 	# Load the explained variance scores
 	lh_data = copy(results['lh_explained_variance_nsdsynthetic'][s])
 	rh_data = copy(results['rh_explained_variance_nsdsynthetic'][s])
-	# Remove vertices with noise ceiling values below a certain threshold,
-	# since they cannot be interpreted in terms of modeling
-	lh_idx = results['lh_nc_nsdsynthetic'][s] < 0.3
-	rh_idx = results['rh_nc_nsdsynthetic'][s] < 0.3
+	# Remove vertices with noise ceiling values below a threshold, since they
+	# cannot be interpreted in terms of modeling
+	lh_idx = results['lh_nc_nsdsynthetic'][s] < 0.2
+	rh_idx = results['rh_nc_nsdsynthetic'][s] < 0.2
 	lh_data[lh_idx] = np.nan
 	rh_data[rh_idx] = np.nan
 	# Store the data
@@ -198,48 +198,31 @@ fig.savefig('nsdsynthetic_explained_variance_zscore-'+str(args.zscore)+'.svg',
 # =============================================================================
 # NSD-core minus NSD-synthetic
 # =============================================================================
-# Explained variance NSD-core
-expl_var_core = []
-for s in range(len(args.subjects)):
-	# Load the explained variance scores
-	lh_data = copy(results['lh_explained_variance_nsdcore_test_284'][s])
-	rh_data = copy(results['rh_explained_variance_nsdcore_test_284'][s])
-	# Remove vertices with noise ceiling values below a certain threshold,
-	# since they cannot be interpreted in terms of modeling
-	lh_idx = results['lh_nc_nsdcore_test_284'][s] < 0.3
-	rh_idx = results['rh_nc_nsdcore_test_284'][s] < 0.3
-	lh_data[lh_idx] = np.nan
-	rh_data[rh_idx] = np.nan
-	# Store the data
-	expl_var_core.append(np.append(lh_data, rh_data))
-expl_var_core = np.asarray(expl_var_core)
-
-# Explained variance NSD-synthetic
-expl_var_synt = []
-for s in range(len(args.subjects)):
-	# Load the explained variance scores
-	lh_data = copy(results['lh_explained_variance_nsdsynthetic'][s])
-	rh_data = copy(results['rh_explained_variance_nsdsynthetic'][s])
-	# Remove vertices with noise ceiling values below a certain threshold,
-	# since they cannot be interpreted in terms of modeling
-	lh_idx = results['lh_nc_nsdsynthetic'][s] < 0.3
-	rh_idx = results['rh_nc_nsdsynthetic'][s] < 0.3
-	lh_data[lh_idx] = np.nan
-	rh_data[rh_idx] = np.nan
-	# Store the data
-	expl_var_synt.append(np.append(lh_data, rh_data))
-expl_var_synt = np.asarray(expl_var_synt)
-
 # Compute the difference between NSD-core and NSD-synthetic's explained
 # variances
-delta_expl_var = np.empty((expl_var_core.shape))
-delta_expl_var[:] = np.nan
-for s in tqdm(range(delta_expl_var.shape[0])):
-	for v in range(delta_expl_var.shape[1]):
-		core = expl_var_core[s,v]
-		synt = expl_var_synt[s,v]
-		if not(np.isnan(core) and np.isnan(synt)):
-			delta_expl_var[s,v] = np.nan_to_num(core) - np.nan_to_num(synt)
+delta_expl_var = []
+for s in range(len(args.subjects)):
+	# Compute the difference between NSD-core and NSD-synthetic
+	lh_data = results['lh_explained_variance_nsdcore_test_284'][s] - \
+		results['lh_explained_variance_nsdsynthetic'][s]
+	rh_data = results['rh_explained_variance_nsdcore_test_284'][s] - \
+		results['rh_explained_variance_nsdsynthetic'][s]
+	# Remove vertices with noise ceiling values below a threshold across both
+	# NSD-synthetic and NSD-core, since they cannot be interpreted in terms of
+	# modeling
+	lh_idx_core = results['lh_nc_nsdcore_test_284'][s] > 0.2
+	rh_idx_core = results['rh_nc_nsdcore_test_284'][s] > 0.2
+	lh_idx_synt = results['lh_nc_nsdsynthetic'][s] > 0.2
+	rh_idx_synt = results['rh_nc_nsdsynthetic'][s] > 0.2
+	lh_idx = np.logical_and(lh_idx_core, lh_idx_synt)
+	rh_idx = np.logical_and(rh_idx_core, rh_idx_synt)
+	lh_data[~lh_idx] = np.nan
+	rh_data[~rh_idx] = np.nan
+	# Store the data
+	delta_expl_var.append(np.append(lh_data, rh_data))
+	del lh_data, rh_data
+delta_expl_var = np.asarray(delta_expl_var)
+
 # Plot
 vertex_data = cortex.Vertex(np.nanmean(delta_expl_var, 0),
 	subject, cmap='RdBu_r', vmin=-70, vmax=70, with_colorbar=True)
