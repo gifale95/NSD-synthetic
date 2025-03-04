@@ -10,6 +10,9 @@ subject : int
 zscore : int
 	Whether to z-score [1] or not [0] the fMRI responses of each vertex across
 	the trials of each session.
+model : str
+	Name of deep neural network model used to extract the image features.
+	Available options are 'alexnet' and 'vit_b_32'.
 project_dir : str
 	Directory of the project folder.
 
@@ -24,6 +27,7 @@ from sklearn.linear_model import LinearRegression
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
 parser.add_argument('--zscore', type=int, default=0)
+parser.add_argument('--model', default='alexnet', type=str)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 args = parser.parse_args()
 
@@ -38,7 +42,7 @@ for key, val in vars(args).items():
 # =============================================================================
 # Load the PCA-downsampled images features
 features_dir = os.path.join(args.project_dir, 'results', 'image_features',
-	'pca_features', 'model-vit_b_32', 'pca_features_sub-0'+
+	'pca_features', 'model-'+args.model, 'pca_features_sub-0'+
 	str(args.subject)+'.npy')
 features = np.load(features_dir, allow_pickle=True).item()
 features_nsdcore_train = features['features_nsdcore_train']
@@ -90,7 +94,7 @@ predicted_fmri = {
 	}
 
 save_dir = os.path.join(args.project_dir, 'results', 'predicted_fmri',
-	'zscored-'+str(args.zscore), 'model-vit_b_32')
+	'zscored-'+str(args.zscore), 'model-'+args.model)
 if os.path.isdir(save_dir) == False:
 	os.makedirs(save_dir)
 

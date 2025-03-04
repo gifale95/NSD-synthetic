@@ -4,6 +4,9 @@ Parameters
 ----------
 subject : int
 	Number of the used NSD subject.
+model : str
+	Name of deep neural network model used to extract the image features.
+	Available options are 'alexnet' and 'vit_b_32'.
 n_components : int
 	Number of PCA components retained.
 project_dir : str
@@ -24,6 +27,7 @@ from sklearn.decomposition import PCA
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
+parser.add_argument('--model', default='alexnet', type=str)
 parser.add_argument('--n_components', default=250, type=int)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 args = parser.parse_args()
@@ -48,7 +52,7 @@ metadata_nsdcore = np.load(os.path.join(data_dir, 'meatadata_nsdcore.npy'),
 # NSD-core train image features
 # =============================================================================
 features_dir = os.path.join(args.project_dir, 'results', 'image_features',
-	'full_features', 'model-vit_b_32', 'nsdcore')
+	'full_features', 'model-'+args.model, 'nsdcore')
 
 features_nsdcore_train = []
 for i in tqdm(metadata_nsdcore['train_img_num']):
@@ -90,7 +94,7 @@ features_nsdsynthetic = []
 
 # Load the NSD-synthetic stimuli features
 features_dir = os.path.join(args.project_dir, 'results', 'image_features',
-	'full_features', 'model-vit_b_32', 'nsdsynthetic_stimuli')
+	'full_features', 'model-'+args.model, 'nsdsynthetic_stimuli')
 fmaps_list = os.listdir(features_dir)
 fmaps_list.sort()
 for i in tqdm(fmaps_list):
@@ -98,7 +102,7 @@ for i in tqdm(fmaps_list):
 
 # Load the NSD-synthetic colorstimuli features
 fmaps_dir = os.path.join(args.project_dir, 'results', 'image_features',
-	'full_features', 'model-vit_b_32', 'nsdsynthetic_colorstimuli_subj0'+
+	'full_features', 'model-'+args.model, 'nsdsynthetic_colorstimuli_subj0'+
 	str(args.subject))
 fmaps_list = os.listdir(fmaps_dir)
 fmaps_list.sort()
@@ -126,7 +130,7 @@ image_features = {
 	}
 
 save_dir = os.path.join(args.project_dir, 'results', 'image_features',
-	'pca_features', 'model-vit_b_32')
+	'pca_features', 'model-'+args.model)
 
 if os.path.isdir(save_dir) == False:
 	os.makedirs(save_dir)

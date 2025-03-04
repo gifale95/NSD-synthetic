@@ -9,6 +9,9 @@ subjects_all : list
 zscore : int
 	Whether to z-score [1] or not [0] the fMRI responses of each vertex across
 	the trials of each session.
+model : str
+	Name of deep neural network model used to extract the image features.
+	Available options are 'alexnet' and 'vit_b_32'.
 project_dir : str
 	Directory of the project folder.
 
@@ -24,6 +27,7 @@ from scipy.stats import pearsonr
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
 parser.add_argument('--zscore', type=int, default=0)
+parser.add_argument('--model', default='alexnet', type=str)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 args = parser.parse_args()
 
@@ -83,7 +87,7 @@ for sub in tqdm(args.subjects):
 
 	# Predicted fMRI
 	data_dir = os.path.join(args.project_dir, 'results', 'predicted_fmri',
-		'zscored-'+str(args.zscore), 'model-vit_b_32',
+		'zscored-'+str(args.zscore), 'model-'+args.model,
 		'predicted_fmri_sub-0'+str(sub)+'.npy')
 	data = np.load(data_dir, allow_pickle=True).item()
 	lh_betas_nsdcore_test_pred = data['lh_betas_nsdcore_test_pred'][idx,:]
@@ -267,7 +271,7 @@ results = {
 	}
 
 save_dir = os.path.join(args.project_dir, 'results', 'encoding_accuracy',
-	'zscored-'+str(args.zscore), 'model-vit_b_32')
+	'zscored-'+str(args.zscore), 'model-'+args.model)
 if os.path.isdir(save_dir) == False:
 	os.makedirs(save_dir)
 

@@ -1,8 +1,11 @@
-"""Extract and save the NSD-core image features, using vit_b_32 (a vision
-transformer).
+"""Extract and save the NSD-core image features, using deep neural network
+models.
 
 Parameters
 ----------
+model : str
+	Name of deep neural network model used to extract the image features.
+	Available options are 'alexnet' and 'vit_b_32'.
 nsd_dir : str
 	Directory of the NSD.
 project_dir : str
@@ -26,6 +29,7 @@ from tqdm import tqdm
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
+parser.add_argument('--model', default='alexnet', type=str)
 parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 args = parser.parse_args()
@@ -51,28 +55,47 @@ transform = trn.Compose([
 
 
 # =============================================================================
-# Vision model
+# Load the deep neural network model
 # =============================================================================
-# Load the model
-model = torchvision.models.vit_b_32(weights='DEFAULT')
+# AlexNet
+if args.model == 'alexnet':
+	# Load the model
+	model = torchvision.models.alexnet(weights='DEFAULT')
+	# Select the used layers for feature extraction
+	#nodes, _ = get_graph_node_names(model)
+	model_layers = [
+		'features.2',
+		'features.5',
+		'features.7',
+		'features.9',
+		'features.12',
+		'classifier.2',
+		'classifier.5',
+		'classifier.6'
+		]
 
-# Select the used layers for feature extraction
-#nodes, _ = get_graph_node_names(model)
-model_layers = [
-	'encoder.layers.encoder_layer_0.add_1',
-	'encoder.layers.encoder_layer_1.add_1',
-	'encoder.layers.encoder_layer_2.add_1',
-	'encoder.layers.encoder_layer_3.add_1',
-	'encoder.layers.encoder_layer_4.add_1',
-	'encoder.layers.encoder_layer_5.add_1',
-	'encoder.layers.encoder_layer_6.add_1',
-	'encoder.layers.encoder_layer_7.add_1',
-	'encoder.layers.encoder_layer_8.add_1',
-	'encoder.layers.encoder_layer_9.add_1',
-	'encoder.layers.encoder_layer_10.add_1',
-	'encoder.layers.encoder_layer_11.add_1'
-	]
+# vit_b_32
+elif args.model == 'vit_b_32':
+	# Load the model
+	model = torchvision.models.vit_b_32(weights='DEFAULT')
+	# Select the used layers for feature extraction
+	#nodes, _ = get_graph_node_names(model)
+	model_layers = [
+		'encoder.layers.encoder_layer_0.add_1',
+		'encoder.layers.encoder_layer_1.add_1',
+		'encoder.layers.encoder_layer_2.add_1',
+		'encoder.layers.encoder_layer_3.add_1',
+		'encoder.layers.encoder_layer_4.add_1',
+		'encoder.layers.encoder_layer_5.add_1',
+		'encoder.layers.encoder_layer_6.add_1',
+		'encoder.layers.encoder_layer_7.add_1',
+		'encoder.layers.encoder_layer_8.add_1',
+		'encoder.layers.encoder_layer_9.add_1',
+		'encoder.layers.encoder_layer_10.add_1',
+		'encoder.layers.encoder_layer_11.add_1'
+		]
 
+# Create the feature extractor
 feature_extractor = create_feature_extractor(model, return_nodes=model_layers)
 feature_extractor.to(device)
 feature_extractor.eval()
@@ -90,7 +113,7 @@ sdataset = sf.get('imgBrick')
 # Extract and store the image features
 # =============================================================================
 save_dir = os.path.join(args.project_dir, 'results', 'image_features',
-	'full_features', 'model-vit_b_32', 'nsdcore')
+	'full_features', 'model-'+args.model, 'nsdcore')
 if os.path.isdir(save_dir) == False:
 	os.makedirs(save_dir)
 
