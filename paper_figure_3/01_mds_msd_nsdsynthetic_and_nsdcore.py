@@ -1,5 +1,5 @@
 """Perform multidimensional scaling (MDS) on NSD-synthetic's and NSD-core's
-(first two scan sessions) fMRI responses of all subjects and of all vertices
+(scan sessions 10 and 20) fMRI responses of all subjects and of all vertices
 with ncsnr above a threshold.
 
 Parameters
@@ -9,6 +9,9 @@ subjects : list
 ncsnr_threshold : float
 	Lower bound ncsnr threshold of the kept vertices: only vertices above this
 	threshold are used.
+zscore : int
+	Whether to z-score [1] or not [0] the fMRI responses of each vertex across
+	the trials of each session.
 project_dir : str
 	Directory of the project folder.
 
@@ -110,13 +113,13 @@ for s, sub in enumerate(args.subjects):
 		betas_nsdsynthetic = np.append(betas_nsdsynthetic, betas_subject, 1)
 	del betas_subject
 
-	# NSD-core (session 1)
+	# NSD-core (session 10)
 	betas_dir = os.path.join(args.nsd_dir, 'nsddata_betas', 'ppdata', 'subj'+
 		format(sub, '02'), 'fsaverage',
 		'betas_fithrf_GLMdenoise_RR')
 	# Load the fMRI betas
-	lh_file_name = 'lh.betas_session01.mgh'
-	rh_file_name = 'rh.betas_session01.mgh'
+	lh_file_name = 'lh.betas_session10.mgh'
+	rh_file_name = 'rh.betas_session10.mgh'
 	lh_betas = np.transpose(np.squeeze(nib.load(os.path.join(betas_dir,
 		lh_file_name)).get_fdata())).astype(np.float32)[:,lh_idx]
 	rh_betas = np.transpose(np.squeeze(nib.load(os.path.join(betas_dir,
@@ -137,13 +140,13 @@ for s, sub in enumerate(args.subjects):
 		betas_nsdcore_sess_1 = np.append(betas_nsdcore_sess_1, betas_subject, 1)
 	del betas_subject
 
-	# NSD-core (session 2)
+	# NSD-core (session 20)
 	betas_dir = os.path.join(args.nsd_dir, 'nsddata_betas', 'ppdata', 'subj'+
 		format(sub, '02'), 'fsaverage',
 		'betas_fithrf_GLMdenoise_RR')
 	# Load the fMRI betas
-	lh_file_name = 'lh.betas_session02.mgh'
-	rh_file_name = 'rh.betas_session02.mgh'
+	lh_file_name = 'lh.betas_session20.mgh'
+	rh_file_name = 'rh.betas_session20.mgh'
 	lh_betas = np.transpose(np.squeeze(nib.load(os.path.join(betas_dir,
 		lh_file_name)).get_fdata())).astype(np.float32)[:,lh_idx]
 	rh_betas = np.transpose(np.squeeze(nib.load(os.path.join(betas_dir,
