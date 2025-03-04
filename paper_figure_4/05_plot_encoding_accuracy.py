@@ -8,6 +8,9 @@ subjects : list
 zscore : int
 	Whether to z-score [1] or not [0] the fMRI responses of each vertex across
 	the trials of each session.
+model : str
+	Name of deep neural network model used to extract the image features.
+	Available options are 'alexnet' and 'vit_b_32'.
 project_dir : str
 	Directory of the project folder.
 
@@ -17,7 +20,6 @@ import argparse
 import os
 import numpy as np
 from copy import copy
-from tqdm import tqdm
 import cortex
 import cortex.polyutils
 import matplotlib.pyplot as plt
@@ -25,6 +27,7 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=int, default=[1, 2, 3, 4, 5, 6, 7, 8])
 parser.add_argument('--zscore', type=int, default=0)
+parser.add_argument('--model', default='alexnet', type=str)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 args = parser.parse_args()
 
@@ -33,7 +36,7 @@ args = parser.parse_args()
 # Load the encoding accuracy results
 # =============================================================================
 data_dir = os.path.join(args.project_dir, 'results', 'encoding_accuracy',
-	'zscored-'+str(args.zscore), 'model-vit_b_32', 'encoding_accuracy.npy')
+	'zscored-'+str(args.zscore), 'model-'+args.model, 'encoding_accuracy.npy')
 results = np.load(data_dir, allow_pickle=True).item()
 
 
@@ -65,8 +68,9 @@ fig = cortex.quickshow(vertex_data,
 	with_colorbar=True
 	)
 plt.show()
-fig.savefig('nsdcore_r2_zscore-'+str(args.zscore)+'.svg', dpi=300,
-	bbox_inches='tight', transparent=True, format='svg')
+file_name = 'nsdcore_r2_model-' + args.model + '.svg'
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
+	format='svg')
 
 # Noise ceiling
 nc_core = np.append(
@@ -85,8 +89,9 @@ fig = cortex.quickshow(vertex_data,
 	with_colorbar=True
 	)
 plt.show()
-fig.savefig('nsdcore_noise_ceiling_zscore-'+str(args.zscore)+'.svg', dpi=300,
-	bbox_inches='tight', transparent=True, format='svg')
+file_name = 'nsdcore_noise_ceiling_model-' + args.model + '.svg'
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
+	format='svg')
 
 # Explained variance
 expl_var_core = []
@@ -116,8 +121,9 @@ fig = cortex.quickshow(vertex_data,
 	with_colorbar=True
 	)
 plt.show()
-fig.savefig('nsdcore_explained_variance_zscore-'+str(args.zscore)+'.svg',
-	dpi=300, bbox_inches='tight', transparent=True, format='svg')
+file_name = 'nsdcore_explained_variance_model-' + args.model + '.svg'
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
+	format='svg')
 
 
 # =============================================================================
@@ -140,8 +146,9 @@ fig = cortex.quickshow(vertex_data,
 	with_colorbar=True
 	)
 plt.show()
-fig.savefig('nsdsynthetic_r2_zscore-'+str(args.zscore)+'.svg', dpi=300,
-	bbox_inches='tight', transparent=True, format='svg')
+file_name = 'nsdsynthetic_r2_model-' + args.model + '.svg'
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
+	format='svg')
 
 # Noise ceiling
 nc_synt = np.append(
@@ -160,8 +167,9 @@ fig = cortex.quickshow(vertex_data,
 	with_colorbar=True
 	)
 plt.show()
-fig.savefig('nsdsynthetic_noise_ceiling_zscore-'+str(args.zscore)+'.svg',
-	dpi=300, bbox_inches='tight', transparent=True, format='svg')
+file_name = 'nsdsynthetic_noise_ceiling_model-' + args.model + '.svg'
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
+	format='svg')
 
 # Explained variance
 expl_var_synt = []
@@ -191,8 +199,9 @@ fig = cortex.quickshow(vertex_data,
 	with_colorbar=True
 	)
 plt.show()
-fig.savefig('nsdsynthetic_explained_variance_zscore-'+str(args.zscore)+'.svg',
-	dpi=300, bbox_inches='tight', transparent=True, format='svg')
+file_name = 'nsdsynthetic_explained_variance_model-' + args.model + '.svg'
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
+	format='svg')
 
 
 # =============================================================================
@@ -237,5 +246,7 @@ fig = cortex.quickshow(vertex_data,
 	with_colorbar=True
 	)
 plt.show()
-fig.savefig('nsdcore_minus_nsdsynthetic_explained_variance.svg', dpi=300,
-	bbox_inches='tight', transparent=True, format='svg')
+file_name = 'nsdcore_minus_nsdsynthetic_explained_variance_model-' + \
+	args.model + '.svg'
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
+	format='svg')
