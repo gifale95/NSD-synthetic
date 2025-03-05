@@ -256,28 +256,8 @@ fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 
 
 # =============================================================================
-# Scatterplot of r² scores against the noise ceiling (for vertices of high-level
-# visual cortex falling withing NDS's ventral, lateral, and dorsal 'streams')
+# Scatterplot of vertex-wise r² scores against the noise ceiling
 # =============================================================================
-# Load the NDS stream ROI labels
-streams_dir = os.path.join(args.nsd_dir, 'nsddata', 'freesurfer', 'fsaverage',
-	'label')
-lh_streams = np.squeeze(nib.load(
-	os.path.join(streams_dir, 'lh.streams.mgz')).get_fdata())
-rh_streams = np.squeeze(nib.load(
-	os.path.join(streams_dir, 'rh.streams.mgz')).get_fdata())
-# Load the NDS stream ROI label names
-roi_dir = os.path.join(args.nsd_dir, 'nsddata', 'freesurfer', 'subj01', 'label',
-	'streams.mgz.ctab')
-stream_names = pd.read_csv(roi_dir, delimiter=' ', header=None,
-	index_col=0).to_dict()[1]
-# HVC stream indices
-idx_used_streams = [5, 6, 7] # ventral, lateral, parietal
-
-# Get indices of vertices falling withing HVC streams
-lh_hvc_idx = np.isin(lh_streams, idx_used_streams)
-rh_hvc_idx = np.isin(rh_streams, idx_used_streams)
-
 # Get the results
 r2_synthetic = []
 r2_core = []
@@ -292,19 +272,15 @@ for s in range(len(args.subjects)):
 	rh_idx_synt = results['rh_nc_nsdsynthetic'][s] > 0.2
 	lh_idx = np.logical_and(lh_idx_core, lh_idx_synt)
 	rh_idx = np.logical_and(rh_idx_core, rh_idx_synt)
-	# Only retain results for vertices within the ventral, lateral and dorsal
-	# stream
-	lh_idx_hvc = np.logical_and(lh_idx, lh_hvc_idx)
-	rh_idx_hvc = np.logical_and(rh_idx, rh_hvc_idx)
 	# Store the results
-	r2_synthetic.append(results['lh_r2_nsdsynthetic'][s][lh_idx_hvc])
-	r2_synthetic.append(results['rh_r2_nsdsynthetic'][s][rh_idx_hvc])
-	r2_core.append(results['lh_r2_nsdcore_test'][s][lh_idx_hvc])
-	r2_core.append(results['rh_r2_nsdcore_test'][s][rh_idx_hvc])
-	nc_synthetic.append(results['lh_nc_nsdsynthetic'][s][lh_idx_hvc])
-	nc_synthetic.append(results['rh_nc_nsdsynthetic'][s][rh_idx_hvc])
-	nc_core.append(results['lh_nc_nsdcore_test_284'][s][lh_idx_hvc])
-	nc_core.append(results['rh_nc_nsdcore_test_284'][s][rh_idx_hvc])
+	r2_synthetic.append(results['lh_r2_nsdsynthetic'][s][lh_idx])
+	r2_synthetic.append(results['rh_r2_nsdsynthetic'][s][rh_idx])
+	r2_core.append(results['lh_r2_nsdcore_test'][s][lh_idx])
+	r2_core.append(results['rh_r2_nsdcore_test'][s][rh_idx])
+	nc_synthetic.append(results['lh_nc_nsdsynthetic'][s][lh_idx])
+	nc_synthetic.append(results['rh_nc_nsdsynthetic'][s][rh_idx])
+	nc_core.append(results['lh_nc_nsdcore_test_284'][s][lh_idx])
+	nc_core.append(results['rh_nc_nsdcore_test_284'][s][rh_idx])
 r2_synthetic = np.concatenate(r2_synthetic)
 r2_core = np.concatenate(r2_core)
 nc_synthetic = np.concatenate(nc_synthetic)
