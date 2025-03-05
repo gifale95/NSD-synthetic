@@ -22,7 +22,10 @@ import numpy as np
 from copy import copy
 import cortex
 import cortex.polyutils
+import matplotlib
 import matplotlib.pyplot as plt
+import nibabel as nib
+import pandas as pd
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=int, default=[1, 2, 3, 4, 5, 6, 7, 8])
@@ -250,3 +253,124 @@ file_name = 'nsdcore_minus_nsdsynthetic_explained_variance_model-' + \
 	args.model + '.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 	format='svg')
+
+
+# =============================================================================
+# Scatterplot of r² scores against the noise ceiling (for vertices of high-level
+# visual cortex falling withing NDS's ventral, lateral, and dorsal 'streams')
+# =============================================================================
+# Load the NDS stream ROI labels
+streams_dir = os.path.join(args.nsd_dir, 'nsddata', 'freesurfer', 'fsaverage',
+	'label')
+lh_streams = np.squeeze(nib.load(
+	os.path.join(streams_dir, 'lh.streams.mgz')).get_fdata())
+rh_streams = np.squeeze(nib.load(
+	os.path.join(streams_dir, 'rh.streams.mgz')).get_fdata())
+# Load the NDS stream ROI label names
+roi_dir = os.path.join(args.nsd_dir, 'nsddata', 'freesurfer', 'subj01', 'label',
+	'streams.mgz.ctab')
+stream_names = pd.read_csv(roi_dir, delimiter=' ', header=None,
+	index_col=0).to_dict()[1]
+# HVC stream indices
+idx_used_streams = [5, 6, 7] # ventral, lateral, parietal
+
+# Get indices of vertices falling withing HVC streams
+lh_hvc_idx = np.isin(lh_streams, idx_used_streams)
+rh_hvc_idx = np.isin(rh_streams, idx_used_streams)
+
+# Get the results
+r2_synthetic = []
+r2_core = []
+nc_synthetic = []
+nc_core = []
+for s in range(len(args.subjects)):
+	# Only retain results for vertices with noise ceiling above threshold in
+	# both NSD-synthetic and NSD-core
+	lh_idx_core = results['lh_nc_nsdcore_test_284'][s] > 0.2
+	rh_idx_core = results['rh_nc_nsdcore_test_284'][s] > 0.2
+	lh_idx_synt = results['lh_nc_nsdsynthetic'][s] > 0.2
+	rh_idx_synt = results['rh_nc_nsdsynthetic'][s] > 0.2
+	lh_idx = np.logical_and(lh_idx_core, lh_idx_synt)
+	rh_idx = np.logical_and(rh_idx_core, rh_idx_synt)
+	# Only retain results for vertices within the ventral, lateral and dorsal
+	# stream
+	lh_idx_hvc = np.logical_and(lh_idx, lh_hvc_idx)
+	rh_idx_hvc = np.logical_and(rh_idx, rh_hvc_idx)
+	# Store the results
+	r2_synthetic.append(results['lh_r2_nsdsynthetic'][s][lh_idx_hvc])
+	r2_synthetic.append(results['rh_r2_nsdsynthetic'][s][rh_idx_hvc])
+	r2_core.append(results['lh_r2_nsdcore_test'][s][lh_idx_hvc])
+	r2_core.append(results['rh_r2_nsdcore_test'][s][rh_idx_hvc])
+	nc_synthetic.append(results['lh_nc_nsdsynthetic'][s][lh_idx_hvc])
+	nc_synthetic.append(results['rh_nc_nsdsynthetic'][s][rh_idx_hvc])
+	nc_core.append(results['lh_nc_nsdcore_test_284'][s][lh_idx_hvc])
+	nc_core.append(results['rh_nc_nsdcore_test_284'][s][rh_idx_hvc])
+r2_synthetic = np.concatenate(r2_synthetic)
+r2_core = np.concatenate(r2_core)
+nc_synthetic = np.concatenate(nc_synthetic)
+nc_core = np.concatenate(nc_core)
+
+# Plot parameters
+fontsize = 50
+matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
+matplotlib.rcParams['font.size'] = fontsize
+plt.rc('xtick', labelsize=fontsize)
+plt.rc('ytick', labelsize=fontsize)
+matplotlib.rcParams['axes.linewidth'] = 2
+matplotlib.rcParams['xtick.major.width'] = 2
+matplotlib.rcParams['xtick.major.size'] = 5
+matplotlib.rcParams['ytick.major.width'] = 2
+matplotlib.rcParams['ytick.major.size'] = 5
+matplotlib.rcParams['lines.markersize'] = 2
+matplotlib.rcParams['axes.spines.right'] = False
+matplotlib.rcParams['axes.spines.top'] = False
+matplotlib.rcParams['axes.spines.left'] = True
+matplotlib.rcParams['axes.spines.bottom'] = True
+matplotlib.rcParams['axes.grid'] = False
+matplotlib.rcParams['grid.linewidth'] = 1
+matplotlib.rcParams['grid.alpha'] = .3
+colors = [(128/255, 42/255, 51/255)]
+
+# Plot the r² scores against the noise ceiling scores
+fig, axs = plt.subplots(figsize=(21, 13), nrows=1, ncols=2, sharex=True,
+	sharey=True)
+axs = np.reshape(axs, (-1))
+for i in range(len(axs)):
+	# Plot diagonal dashed line
+	axs[i].plot(np.arange(-1,1.1,.1), np.arange(-1,1.1,.1), '--k', linewidth=2,
+		alpha=.5, label='_nolegend_')
+	# Plot the results
+	if i == 0:
+		axs[i].scatter(nc_core, r2_core, s=5, color=colors[0], alpha=.1)
+	elif i == 1:
+		axs[i].scatter(nc_synthetic, r2_synthetic, s=5, color=colors[0],
+			alpha=.1)
+	axs[i].set_aspect('equal')
+	# y-axis
+	if i in [0]:
+		ticks = [0.2, 0.4, 0.6, 0.8, 1]
+		labels = ['.2', '.4', '.6', '.8', '1']
+		axs[i].set_ylabel('$r²$', fontsize=fontsize)
+		plt.yticks(ticks=ticks, labels=labels)
+	axs[i].set_ylim(bottom=0, top=1)
+	# x-axis
+	if i in [0, 1]:
+		ticks = [0, 0.2, 0.4, 0.6, 0.8, 1]
+		labels = ['0', '.2', '.4', '.6', '.8', '1']
+		axs[i].set_xlabel('Noise ceiling', fontsize=fontsize)
+		plt.xticks(ticks=ticks, labels=labels, fontsize=fontsize)
+	axs[i].set_xlim(left=0, right=1)
+	# Title
+	if i == 0:
+		title = 'NSD-core'
+	elif i == 1:
+		title = 'NSD-synthetic'
+	axs[i].set_title(title, fontsize=fontsize)
+# Save the figure
+file_name = 'encoding_accuracy_scatterplots_model-' + args.model + '.svg'
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
+	format='svg')
+file_name = 'encoding_accuracy_scatterplots_model-' + args.model + '.png'
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
+	format='png')
+
