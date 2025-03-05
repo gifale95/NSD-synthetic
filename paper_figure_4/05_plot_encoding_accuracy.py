@@ -303,7 +303,7 @@ matplotlib.rcParams['axes.spines.bottom'] = True
 matplotlib.rcParams['axes.grid'] = False
 matplotlib.rcParams['grid.linewidth'] = 1
 matplotlib.rcParams['grid.alpha'] = .3
-colors = [(128/255, 42/255, 51/255)]
+colors = [(128/255, 42/255, 51/255), (200/255, 150/255, 20/255)]
 
 # Plot the r² scores against the noise ceiling scores
 fig, axs = plt.subplots(figsize=(21, 13), nrows=1, ncols=2, sharex=True,
@@ -315,10 +315,18 @@ for i in range(len(axs)):
 		alpha=.5, label='_nolegend_')
 	# Plot the results
 	if i == 0:
+		# Vertex-wise results
 		axs[i].scatter(nc_core, r2_core, s=5, color=colors[0], alpha=.1)
+		# Vertex-median results
+		axs[i].scatter(np.median(nc_core), np.median(r2_core), s=300,
+			marker='X', color='k', alpha=1)
 	elif i == 1:
+		# Vertex-wise results
 		axs[i].scatter(nc_synthetic, r2_synthetic, s=5, color=colors[0],
 			alpha=.1)
+		# Vertex-median results
+		axs[i].scatter(np.median(nc_synthetic), np.median(r2_synthetic), s=300,
+			marker='X', color='k', alpha=1)
 	axs[i].set_aspect('equal')
 	# y-axis
 	if i in [0]:
