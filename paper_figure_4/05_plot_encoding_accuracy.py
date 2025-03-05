@@ -24,8 +24,6 @@ import cortex
 import cortex.polyutils
 import matplotlib
 import matplotlib.pyplot as plt
-import nibabel as nib
-import pandas as pd
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=int, default=[1, 2, 3, 4, 5, 6, 7, 8])
