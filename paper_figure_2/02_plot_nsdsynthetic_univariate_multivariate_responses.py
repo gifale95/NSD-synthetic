@@ -181,7 +181,7 @@ for i in idx:
 	plt.plot([i, i], [0-pad, len(rsa)], linewidth=2, color='white')
 	plt.plot([0-pad, len(rsa)], [i, i], linewidth=2, color='white')
 
-# Plot the diagonal red boxes
+# Plot the diagonal cyan boxes
 color = '#00FFFF'
 n_sub = len(args.subjects)
 idx = np.arange(0, len(rsa), n_sub) - pad
