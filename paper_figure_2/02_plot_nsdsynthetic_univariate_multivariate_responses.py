@@ -178,18 +178,18 @@ cax = plt.imshow(rsa, cmap='inferno', vmin=0, vmax=1, aspect='equal')
 # Plot the white ROI grids
 idx = np.arange(len(args.subjects), len(rsa), len(args.subjects)) - pad
 for i in idx:
-	plt.plot([i, i], [0-pad, len(rsa)], linewidth=2, color='white')
-	plt.plot([0-pad, len(rsa)], [i, i], linewidth=2, color='white')
+	plt.plot([i, i], [0-pad, len(rsa)], linewidth=4, color='white')
+	plt.plot([0-pad, len(rsa)], [i, i], linewidth=4, color='white')
 
 # Plot the diagonal cyan boxes
 color = '#00FFFF'
 n_sub = len(args.subjects)
 idx = np.arange(0, len(rsa), n_sub) - pad
 for i in idx:
-	plt.plot([i, i+n_sub], [i, i], linewidth=4, color=color)
-	plt.plot([i, i+n_sub], [i+n_sub, i+n_sub], linewidth=4, color=color)
-	plt.plot([i, i], [i, i+n_sub], linewidth=4, color=color)
-	plt.plot([i+n_sub, i+n_sub], [i, i+n_sub], linewidth=4, color=color)
+	plt.plot([i, i+n_sub], [i, i], linewidth=7, color=color)
+	plt.plot([i, i+n_sub], [i+n_sub, i+n_sub], linewidth=7, color=color)
+	plt.plot([i, i], [i, i+n_sub], linewidth=7, color=color)
+	plt.plot([i+n_sub, i+n_sub], [i, i+n_sub], linewidth=7, color=color)
 
 # Colorbar
 cbar = plt.colorbar(cax, shrink=0.75, ticks=[0, 0.2, 0.4, 0.6, 0.8, 1],
