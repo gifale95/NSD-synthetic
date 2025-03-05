@@ -6,7 +6,7 @@ subject : int
 	Number of the used NSD subject.
 model : str
 	Name of deep neural network model used to extract the image features.
-	Available options are 'alexnet' and 'vit_b_32'.
+	Available options are 'alexnet', 'resnet50', 'moco', and 'vit_b_32'.
 n_components : int
 	Number of PCA components retained.
 project_dir : str

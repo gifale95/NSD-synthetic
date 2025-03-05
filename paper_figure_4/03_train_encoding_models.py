@@ -12,7 +12,7 @@ zscore : int
 	the trials of each session.
 model : str
 	Name of deep neural network model used to extract the image features.
-	Available options are 'alexnet' and 'vit_b_32'.
+	Available options are 'alexnet', 'resnet50', 'moco', and 'vit_b_32'.
 project_dir : str
 	Directory of the project folder.
 

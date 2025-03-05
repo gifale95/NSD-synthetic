@@ -5,7 +5,7 @@ Parameters
 ----------
 model : str
 	Name of deep neural network model used to extract the image features.
-	Available options are 'alexnet' and 'vit_b_32'.
+	Available options are 'alexnet', 'resnet50', 'moco', and 'vit_b_32'.
 nsd_dir : str
 	Directory of the NSD.
 project_dir : str
@@ -16,6 +16,7 @@ project_dir : str
 import argparse
 import numpy as np
 import torch
+import torch.nn as nn
 import torchvision
 from torchvision import transforms as trn
 from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
@@ -72,6 +73,55 @@ if args.model == 'alexnet':
 		'classifier.2',
 		'classifier.5',
 		'classifier.6'
+		]
+
+# ResNet-50
+elif args.model == 'resnet50':
+	# Load the model
+	model = torchvision.models.resnet50(weights='DEFAULT')
+	# Select the used layers for feature extraction
+	#nodes, _ = get_graph_node_names(model)
+	model_layers = [
+		'layer1.2.relu_2',
+		'layer2.3.relu_2',
+		'layer3.5.relu_2',
+		'layer4.2.relu_2',
+		'fc'
+		]
+
+# MoCo
+elif args.model == 'moco':
+	# Load the ResNet-50 model
+	model = torchvision.models.resnet50(weights='DEFAULT')
+	# Load the MoCo weights (https://github.com/facebookresearch/moco)
+	checkpoint = torch.load('moco_v2_800ep_pretrain.pth.tar',
+		map_location='cpu')['state_dict']
+	# Remove "module.encoder_q." prefix if present
+	state_dict = {k.replace('module.encoder_q.', ''): v for k, v in checkpoint.items()}
+	# Extract FC weights
+	fc_state_dict = {k: v for k, v in state_dict.items() if k.startswith("fc.")}
+	# Define MoCo's FC structure
+	if 'fc.0.weight' in fc_state_dict:  # Multi-layer FC (MoCo v2)
+		dims = [fc_state_dict['fc.0.weight'].shape[1],
+			fc_state_dict['fc.0.weight'].shape[0],
+			fc_state_dict['fc.2.weight'].shape[0]]
+		model.fc = nn.Sequential(nn.Linear(dims[0], dims[1]), nn.ReLU(),
+			nn.Linear(dims[1], dims[2]))
+	else:  # Single-layer FC (MoCo v1)
+		dims = [fc_state_dict['fc.weight'].shape[1],
+			fc_state_dict['fc.weight'].shape[0]]
+		model.fc = nn.Linear(*dims[::-1])
+	# Load weights (excluding FC first)
+	model.load_state_dict({k: v for k, v in state_dict.items() if k not in fc_state_dict}, strict=False)
+	model.fc.load_state_dict({k.replace('fc.', ''): v for k, v in fc_state_dict.items()}, strict=True)
+	# Select the used layers for feature extraction
+	#nodes, _ = get_graph_node_names(model)
+	model_layers = [
+		'layer1.2.relu_2',
+		'layer2.3.relu_2',
+		'layer3.5.relu_2',
+		'layer4.2.relu_2',
+		'fc.2'
 		]
 
 # vit_b_32
