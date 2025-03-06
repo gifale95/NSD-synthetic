@@ -220,14 +220,14 @@ for s in range(len(args.subjects)):
 	# Remove vertices with noise ceiling values below a threshold across both
 	# NSD-synthetic and NSD-core, since they cannot be interpreted in terms of
 	# modeling
-	lh_idx_core = results['lh_nc_nsdcore_test_284'][s] > 0.2
-	rh_idx_core = results['rh_nc_nsdcore_test_284'][s] > 0.2
-	lh_idx_synt = results['lh_nc_nsdsynthetic'][s] > 0.2
-	rh_idx_synt = results['rh_nc_nsdsynthetic'][s] > 0.2
+	lh_idx_core = results['lh_nc_nsdcore_test_284'][s] < 0.2
+	rh_idx_core = results['rh_nc_nsdcore_test_284'][s] < 0.2
+	lh_idx_synt = results['lh_nc_nsdsynthetic'][s] < 0.2
+	rh_idx_synt = results['rh_nc_nsdsynthetic'][s] < 0.2
 	lh_idx = np.logical_and(lh_idx_core, lh_idx_synt)
 	rh_idx = np.logical_and(rh_idx_core, rh_idx_synt)
-	lh_data[~lh_idx] = np.nan
-	rh_data[~rh_idx] = np.nan
+	lh_data[lh_idx] = np.nan
+	rh_data[rh_idx] = np.nan
 	# Store the data
 	delta_expl_var.append(np.append(lh_data, rh_data))
 	del lh_data, rh_data
