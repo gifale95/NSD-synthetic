@@ -90,7 +90,7 @@ fig = cortex.quickshow(vertex_data,
 	with_colorbar=True
 	)
 plt.show()
-file_name = 'nsdcore_noise_ceiling_model-' + args.model + '.svg'
+file_name = 'nsdcore_noise_ceiling.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 	format='svg')
 
@@ -168,7 +168,7 @@ fig = cortex.quickshow(vertex_data,
 	with_colorbar=True
 	)
 plt.show()
-file_name = 'nsdsynthetic_noise_ceiling_model-' + args.model + '.svg'
+file_name = 'nsdsynthetic_noise_ceiling.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 	format='svg')
 
