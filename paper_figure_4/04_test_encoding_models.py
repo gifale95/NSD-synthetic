@@ -4,8 +4,8 @@ times), and out-of-distribution (using NSD-synthetic 284 images).
 
 Parameters
 ----------
-subjects_all : list
-	List with all used NSD subject.
+subjects : list
+	List of the used NSD subjects.
 zscore : int
 	Whether to z-score [1] or not [0] the fMRI responses of each vertex across
 	the trials of each session.
