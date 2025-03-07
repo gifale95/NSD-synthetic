@@ -102,8 +102,8 @@ for s in range(len(args.subjects)):
 	rh_data = copy(results['rh_explained_variance_nsdcore_test_284'][s])
 	# Remove vertices with noise ceiling values below a threshold, since they
 	# cannot be interpreted in terms of modeling
-	lh_idx = results['lh_nc_nsdcore_test_284'][s] < 0.2
-	rh_idx = results['rh_nc_nsdcore_test_284'][s] < 0.2
+	lh_idx = results['lh_nc_nsdcore_test_284'][s] < 0.3
+	rh_idx = results['rh_nc_nsdcore_test_284'][s] < 0.3
 	lh_data[lh_idx] = np.nan
 	rh_data[rh_idx] = np.nan
 	# Store the data
@@ -180,8 +180,8 @@ for s in range(len(args.subjects)):
 	rh_data = copy(results['rh_explained_variance_nsdsynthetic'][s])
 	# Remove vertices with noise ceiling values below a threshold, since they
 	# cannot be interpreted in terms of modeling
-	lh_idx = results['lh_nc_nsdsynthetic'][s] < 0.2
-	rh_idx = results['rh_nc_nsdsynthetic'][s] < 0.2
+	lh_idx = results['lh_nc_nsdsynthetic'][s] < 0.3
+	rh_idx = results['rh_nc_nsdsynthetic'][s] < 0.3
 	lh_data[lh_idx] = np.nan
 	rh_data[rh_idx] = np.nan
 	# Store the data
@@ -220,10 +220,10 @@ for s in range(len(args.subjects)):
 	# Remove vertices with noise ceiling values below a threshold across both
 	# NSD-synthetic and NSD-core, since they cannot be interpreted in terms of
 	# modeling
-	lh_idx_core = results['lh_nc_nsdcore_test_284'][s] > 0.2
-	rh_idx_core = results['rh_nc_nsdcore_test_284'][s] > 0.2
-	lh_idx_synt = results['lh_nc_nsdsynthetic'][s] > 0.2
-	rh_idx_synt = results['rh_nc_nsdsynthetic'][s] > 0.2
+	lh_idx_core = results['lh_nc_nsdcore_test_284'][s] > 0.3
+	rh_idx_core = results['rh_nc_nsdcore_test_284'][s] > 0.3
+	lh_idx_synt = results['lh_nc_nsdsynthetic'][s] > 0.3
+	rh_idx_synt = results['rh_nc_nsdsynthetic'][s] > 0.3
 	lh_idx = np.logical_and(lh_idx_core, lh_idx_synt)
 	rh_idx = np.logical_and(rh_idx_core, rh_idx_synt)
 	lh_data[~lh_idx] = np.nan
@@ -264,10 +264,10 @@ nc_core = []
 for s in range(len(args.subjects)):
 	# Only retain results for vertices with noise ceiling above threshold in
 	# both NSD-synthetic and NSD-core
-	lh_idx_core = results['lh_nc_nsdcore_test_284'][s] > 0.2
-	rh_idx_core = results['rh_nc_nsdcore_test_284'][s] > 0.2
-	lh_idx_synt = results['lh_nc_nsdsynthetic'][s] > 0.2
-	rh_idx_synt = results['rh_nc_nsdsynthetic'][s] > 0.2
+	lh_idx_core = results['lh_nc_nsdcore_test_284'][s] > 0.3
+	rh_idx_core = results['rh_nc_nsdcore_test_284'][s] > 0.3
+	lh_idx_synt = results['lh_nc_nsdsynthetic'][s] > 0.3
+	rh_idx_synt = results['rh_nc_nsdsynthetic'][s] > 0.3
 	lh_idx = np.logical_and(lh_idx_core, lh_idx_synt)
 	rh_idx = np.logical_and(rh_idx_core, rh_idx_synt)
 	# Store the results

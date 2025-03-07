@@ -85,8 +85,7 @@ elif args.model == 'resnet50':
 		'layer1.2.relu_2',
 		'layer2.3.relu_2',
 		'layer3.5.relu_2',
-		'layer4.2.relu_2',
-		'fc'
+		'layer4.2.relu_2'
 		]
 
 # MoCo
@@ -120,8 +119,7 @@ elif args.model == 'moco':
 		'layer1.2.relu_2',
 		'layer2.3.relu_2',
 		'layer3.5.relu_2',
-		'layer4.2.relu_2',
-		'fc.2'
+		'layer4.2.relu_2'
 		]
 
 # vit_b_32
