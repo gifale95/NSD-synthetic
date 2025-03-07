@@ -332,14 +332,14 @@ for i in range(len(axs)):
 	if i in [0]:
 		ticks = [0.2, 0.4, 0.6, 0.8, 1]
 		labels = ['.2', '.4', '.6', '.8', '1']
-		axs[i].set_ylabel('$r²$', fontsize=fontsize)
+		axs[i].set_ylabel('Explained variance ($r²$)', fontsize=fontsize)
 		plt.yticks(ticks=ticks, labels=labels)
 	axs[i].set_ylim(bottom=0, top=1)
 	# x-axis
 	if i in [0, 1]:
 		ticks = [0, 0.2, 0.4, 0.6, 0.8, 1]
 		labels = ['0', '.2', '.4', '.6', '.8', '1']
-		axs[i].set_xlabel('Noise ceiling', fontsize=fontsize)
+		axs[i].set_xlabel('Noise ceiling ($r²$)', fontsize=fontsize)
 		plt.xticks(ticks=ticks, labels=labels, fontsize=fontsize)
 	axs[i].set_xlim(left=0, right=1)
 	# Title
