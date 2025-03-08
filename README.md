@@ -1,14 +1,14 @@
-# ???paper title??? !!!!!!!!!!!!!!!!
+# A 7T fMRI dataset of synthetic images for out-of-distribution modeling of vision
 
 Here we provide the code to reproduce all results from the paper:</br>
-"[???paper title???](???)".</br>
+"[A 7T fMRI dataset of synthetic images for out-of-distribution modeling of vision](!!!!!!!!!!!!!!!!!!!!!!!!!!!)".</br>
 Alessandro T. Gifford, Radoslaw M. Cichy, Thomas Naselaris, Kendrick Kay
 
 
 
-## 📄 Paper abstract !!!!!!!!!!!!!!!!!!!!!!
+## 📄 Paper abstract
 
-!!!!! Add paper abstract here !!!!!
+Large-scale visual neural datasets such as the Natural Scenes Dataset (NSD) are boosting NeuroAI research by enabling computational models of the brain with performances beyond what was possible just a decade ago. However, these datasets lack out-of-distribution (OOD) components, which are crucial for the development of more robust models. Here, we address this limitation by releasing NSD-synthetic, a dataset consisting of 7T fMRI responses from the eight NSD subjects for 284 carefully controlled synthetic images. We show that NSD-synthetic’s fMRI responses reliably encode stimulus-related information and are OOD with respect to NSD. Furthermore, OOD generalization tests on NSD-synthetic reveal differences between models of the brain that are not detected with NSD—specifically, self-supervised deep neural networks better explain neural responses than their task-supervised counterparts. These results showcase how NSD-synthetic enables OOD generalization tests that facilitate the development of more robust models of visual processing, and the formulation of more accurate theories of human vision.
 
 
 
@@ -42,7 +42,7 @@ pip install -r requirements.txt
 
 ### 🧠 Flattened cortical surface plots
 
-In Figures 2 and 4, we plotted results on flattened cortical surfaces using [pycortex' fsaverage subject](https://figshare.com/articles/dataset/fsaverage_subject_for_pycortex/9916166).
+In Figures 2, 4, and 5, we plotted results on flattened cortical surfaces using [pycortex' fsaverage subject](https://figshare.com/articles/dataset/fsaverage_subject_for_pycortex/9916166).
 
 For visualization purposes, we manually drew surface labels based on the [“streams” ROI collection](https://cvnlab.slite.page/p/X_7BBMgghj/ROIs) as provided in the NSD data release. To use these labels, please add the [`overlays.svg`](https://github.com/gifale95/NSD-synthetic/blob/main/pycortex_stream_labels/overlays.svg) file to the pycortex fsaverage subject folder (within an Anaconda environment, you should find this folder at: `../anaconda3/envs/env_name/share/pycortex/db/fsaverage`)
 
@@ -57,5 +57,5 @@ If you experience problems with the code, please get in touch with Ale (alessand
 ## 📜 Citation !!!!!!!!!!!!!!!!!!!!!!!!!!!
 If you use any of our data or code, please cite:
 
-> * Gifford AT, Cichy RM, Naselaris T, Kay K. 2025. ???. _arXiv preprint_, arXiv:2411.10872. DOI: [https://doi.org/10.48550/arXiv.2411.10872]() !!!!!!!!!!!!!!!!!!!
+> * Gifford AT, Cichy RM, Naselaris T, Kay K. 2025. A 7T fMRI dataset of synthetic images for out-of-distribution modeling of vision. _arXiv preprint_, arXiv:!!!!!!!!!!!!!!!!!!!!!!!. DOI: [!!!!!!!!!!!!!!!!!!!!!!!!!](!!!!!!!!!!!!!!!!!!!!!!!!!)
 > * Allen EJ, St-Yves G, Wu Y, Breedlove JL, Prince JS, Dowdle LT, Nau M, Caron B, Pestilli F, Charest I, Hutchinson BJ, Naselaris T, Kay K. 2022. A massive 7T fMRI dataset to bridge cognitive neuroscience and artificial intelligence. _Nature neuroscience_, 25(1), 116-126. DOI: [https://doi.org/10.1038/s41593-021-00962-x](https://doi.org/10.1038/s41593-021-00962-x)
