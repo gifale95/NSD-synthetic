@@ -42,6 +42,9 @@ for sub in args.subjects:
 # =============================================================================
 plt.rc('xtick', labelsize=25)
 plt.rc('ytick', labelsize=25)
+matplotlib.use("svg")
+plt.rcParams["text.usetex"] = False
+plt.rcParams['svg.fonttype'] = 'none'
 
 
 # =============================================================================

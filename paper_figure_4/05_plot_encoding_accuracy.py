@@ -46,6 +46,9 @@ results = np.load(data_dir, allow_pickle=True).item()
 # =============================================================================
 plt.rc('xtick', labelsize=19)
 plt.rc('ytick', labelsize=19)
+matplotlib.use("svg")
+plt.rcParams["text.usetex"] = False
+plt.rcParams['svg.fonttype'] = 'none'
 subject = 'fsaverage'
 
 
@@ -290,10 +293,10 @@ matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
 matplotlib.rcParams['font.size'] = fontsize
 plt.rc('xtick', labelsize=fontsize)
 plt.rc('ytick', labelsize=fontsize)
-matplotlib.rcParams['axes.linewidth'] = 2
-matplotlib.rcParams['xtick.major.width'] = 2
+matplotlib.rcParams['axes.linewidth'] = 1
+matplotlib.rcParams['xtick.major.width'] = 1
 matplotlib.rcParams['xtick.major.size'] = 5
-matplotlib.rcParams['ytick.major.width'] = 2
+matplotlib.rcParams['ytick.major.width'] = 1
 matplotlib.rcParams['ytick.major.size'] = 5
 matplotlib.rcParams['lines.markersize'] = 2
 matplotlib.rcParams['axes.spines.right'] = False
@@ -303,6 +306,9 @@ matplotlib.rcParams['axes.spines.bottom'] = True
 matplotlib.rcParams['axes.grid'] = False
 matplotlib.rcParams['grid.linewidth'] = 1
 matplotlib.rcParams['grid.alpha'] = .3
+matplotlib.use("svg")
+plt.rcParams["text.usetex"] = False
+plt.rcParams['svg.fonttype'] = 'none'
 colors = [(128/255, 42/255, 51/255), (200/255, 150/255, 20/255)]
 
 # Plot the r² scores against the noise ceiling scores

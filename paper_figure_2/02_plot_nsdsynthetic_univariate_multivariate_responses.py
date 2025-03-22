@@ -69,11 +69,11 @@ matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
 matplotlib.rcParams['font.size'] = fontsize
 plt.rc('xtick', labelsize=fontsize)
 plt.rc('ytick', labelsize=fontsize)
-matplotlib.rcParams['axes.linewidth'] = 2
-matplotlib.rcParams['xtick.major.width'] = 2
-matplotlib.rcParams['xtick.major.size'] = 2
-matplotlib.rcParams['ytick.major.width'] = 2
-matplotlib.rcParams['ytick.major.size'] = 2
+matplotlib.rcParams['axes.linewidth'] = 1
+matplotlib.rcParams['xtick.major.width'] = 1
+matplotlib.rcParams['xtick.major.size'] = 5
+matplotlib.rcParams['ytick.major.width'] = 1
+matplotlib.rcParams['ytick.major.size'] = 5
 matplotlib.rcParams['lines.markersize'] = 2
 matplotlib.rcParams['axes.spines.right'] = False
 matplotlib.rcParams['axes.spines.top'] = False
@@ -82,6 +82,9 @@ matplotlib.rcParams['axes.spines.bottom'] = False
 matplotlib.rcParams['axes.grid'] = False
 matplotlib.rcParams['grid.linewidth'] = 1
 matplotlib.rcParams['grid.alpha'] = .3
+matplotlib.use("svg")
+plt.rcParams["text.usetex"] = False
+plt.rcParams['svg.fonttype'] = 'none'
 
 
 # =============================================================================
