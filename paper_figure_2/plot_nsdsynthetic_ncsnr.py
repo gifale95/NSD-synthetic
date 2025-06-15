@@ -14,6 +14,7 @@ import os
 import numpy as np
 import cortex
 import cortex.polyutils
+import matplotlib
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
