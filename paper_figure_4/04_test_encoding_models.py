@@ -213,8 +213,8 @@ for sub in tqdm(args.subjects):
 	rh_explained_variance_nsdsynthetic_sub = np.divide(rh_r2_nsdsynthetic_sub,
 		rh_nc_nsdsynthetic_sub) * 100
 
-	# Set the noise-normalized encoding accuracy to 100 for vertices where the
-	# the correlation is higher than the noise ceiling, to prevent encoding
+	# Set the noise-ceiling-normalized encoding accuracy to 100 for vertices where
+	# the the correlation is higher than the noise ceiling, to prevent encoding
 	# accuracy values higher than 100%
 	lh_explained_variance_nsdcore_test_sub\
 		[lh_explained_variance_nsdcore_test_sub>100] = 100
