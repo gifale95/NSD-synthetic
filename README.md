@@ -29,13 +29,13 @@ To run the code, you first need to install the libraries in the [requirements.tx
 First, create an [Anaconda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) environment with the correct Python version:
 
 ```shell
-conda create -n rnc_env python=3.9
+conda create -n nsdsynthetic_env python=3.9
 ```
 
 Next, download the [requirements.txt][requirements] file, navigate with your terminal to the download directory, and activate the Anaconda environment previously created with:
 
 ```shell
-source activate rnc_env
+source activate nsdsynthetic_env
 ```
 
 Now you can install the libraries with:
