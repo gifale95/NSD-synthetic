@@ -22,13 +22,27 @@ The NSD dataset (including NSD-synthetic) is freely available at [http://natural
 
 ### ⚙️ Installation
 
-To reproduce the paper's results, you can download and run the Python code from this repository. To run this code, you will first need to install the libraries in the [requirements.txt](https://github.com/gifale95/NSD-synthetic/blob/main/requirements.txt)). We recommend installing these libraries within a virtual environment (e.g., an [Anaconda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)) environment) using:
+This repository contains code to reproduce all paper's results.
+
+To run the code, you first need to install the libraries in the [requirements.txt](https://github.com/gifale95/NSD-synthetic/blob/main/requirements.txt) file within an Anaconda environment. Here, we guide you through the installation steps.
+
+First, create an [Anaconda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) environment with the correct Python version:
+
+```shell
+conda create -n rnc_env python=3.9
+```
+
+Next, download the [requirements.txt][requirements] file, navigate with your terminal to the download directory, and activate the Anaconda environment previously created with:
+
+```shell
+source activate rnc_env
+```
+
+Now you can install the libraries with:
 
 ```shell
 pip install -r requirements.txt
 ```
-
-
 
 ### 📦 Code description
 
