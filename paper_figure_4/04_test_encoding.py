@@ -1,17 +1,31 @@
-"""Test the encoding model's prediction accuracy in-distribution (using the
-first 284 of 515/1,000 NSD-core's shared images that all subjects saw for 3
-times), and out-of-distribution (using NSD-synthetic 284 images).
+"""Test the encoding model's prediction accuracy in-distribution (using 284
+NSD-core's shared images), and out-of-distribution (using NSD-synthetic's 284
+images).
 
 Parameters
 ----------
 subjects : list
 	List of the used NSD subjects.
+train_test_session_control : int
+	If '1', use the train and test splits consist of image conditions from
+	non-overlapping fMRI scan sessions.
+tot_vertex_splits : int
+	If regression='ridge', total amount of fMRI vertex splits.
 zscore : int
 	Whether to z-score [1] or not [0] the fMRI responses of each vertex across
 	the trials of each session.
 model : str
 	Name of deep neural network model used to extract the image features.
 	Available options are 'alexnet', 'resnet50', 'moco', and 'vit_b_32'.
+layer : str
+	If 'all', train the encoding models on the features from all model layers.
+	If a layer name is given, the encoding models are trained on the features of
+	that layer.
+regression : str
+	If 'linear', the encoding models will consist of linear regressions that
+	predict fMRI responses using PCA-downsampled image features as predictors.
+	If 'ridge', the encoding models will consist of ridge regressions that
+	predict fMRI responses using full image features as predictors.
 project_dir : str
 	Directory of the project folder.
 
@@ -19,6 +33,7 @@ project_dir : str
 
 import argparse
 import os
+import random
 import numpy as np
 from tqdm import tqdm
 import h5py
@@ -26,8 +41,12 @@ from scipy.stats import pearsonr
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
+parser.add_argument('--train_test_session_control', type=int, default=0)
+parser.add_argument('--tot_vertex_splits', type=int, default=14)
 parser.add_argument('--zscore', type=int, default=0)
 parser.add_argument('--model', default='alexnet', type=str)
+parser.add_argument('--layer', default='all', type=str)
+parser.add_argument('--regression', default='linear', type=str)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 args = parser.parse_args()
 
@@ -35,6 +54,11 @@ print('>>> Test encoding models <<<')
 print('\nInput parameters:')
 for key, val in vars(args).items():
 	print('{:16} {}'.format(key, val))
+
+# Set random seed for reproducible results
+seed = 20200220
+np.random.seed(seed)
+random.seed(seed)
 
 
 # =============================================================================
@@ -64,41 +88,63 @@ for sub in tqdm(args.subjects):
 # Load the recorded and predicted fMRI responses for the NSD-core test images
 # =============================================================================
 	# Load the metadata
-	data_dir = os.path.join(args.project_dir, 'results', 'fmri_betas',
-		'zscored-'+str(args.zscore), 'sub-0'+format(sub),
+	data_dir = os.path.join(args.project_dir, 'results',
+		'train_test_session_control-'+str(args.train_test_session_control),
+		'fmri_betas', 'zscore-'+str(args.zscore), 'sub-0'+format(sub),
 		'meatadata_nsdcore.npy')
 	metadata_nsdcore = np.load(data_dir, allow_pickle=True).item()
 
-	# Only select the first 284 image conditions with 3 repeats for each
-	# subjects (to match the image condition number of NSD-synthetic)
-	idx = np.where(np.isin(metadata_nsdcore['test_img_num'],
-		metadata_nsdcore['test_img_num_special_515']))[0][:284]
-
 	# Recorded fMRI
-	data_dir = os.path.join(args.project_dir, 'results', 'fmri_betas',
-		'zscored-'+str(args.zscore), 'sub-0'+format(sub))
+	data_dir = os.path.join(args.project_dir, 'results',
+		'train_test_session_control-'+str(args.train_test_session_control),
+		'fmri_betas', 'zscore-'+str(args.zscore), 'sub-0'+format(sub))
 	lh_betas_nsdcore_test = h5py.File(os.path.join(data_dir,
-		'lh_betas_nsdcore_test.h5'), 'r')['betas'][idx,:]
+		'lh_betas_nsdcore_test.h5'), 'r')['betas'][:]
 	rh_betas_nsdcore_test = h5py.File(os.path.join(data_dir,
-		'rh_betas_nsdcore_test.h5'), 'r')['betas'][idx,:]
-	# Set NaN values (missing fMRI data) to zero
-	lh_betas_nsdcore_test = np.nan_to_num(lh_betas_nsdcore_test)
-	rh_betas_nsdcore_test = np.nan_to_num(rh_betas_nsdcore_test)
+		'rh_betas_nsdcore_test.h5'), 'r')['betas'][:]
 
 	# Predicted fMRI
-	data_dir = os.path.join(args.project_dir, 'results', 'predicted_fmri',
-		'zscored-'+str(args.zscore), 'model-'+args.model,
-		'predicted_fmri_sub-0'+str(sub)+'.npy')
-	data = np.load(data_dir, allow_pickle=True).item()
-	lh_betas_nsdcore_test_pred = data['lh_betas_nsdcore_test_pred'][idx,:]
-	rh_betas_nsdcore_test_pred = data['rh_betas_nsdcore_test_pred'][idx,:]
+	if args.regression == 'linear':
+		data_dir = os.path.join(args.project_dir, 'results',
+			'train_test_session_control-'+str(args.train_test_session_control),
+			'predicted_fmri', 'zscore-'+str(args.zscore), 'model-'+args.model,
+			'layer-'+args.layer, 'regression-'+args.regression,
+			'predicted_fmri_sub-0'+str(sub)+'.npy')
+		data = np.load(data_dir, allow_pickle=True).item()
+		lh_betas_nsdcore_test_pred = data['lh_betas_nsdcore_test_pred']
+		rh_betas_nsdcore_test_pred = data['rh_betas_nsdcore_test_pred']
+	elif args.regression == 'ridge':
+		for vs in range(args.tot_vertex_splits):
+			data_dir = os.path.join(args.project_dir, 'results',
+				'train_test_session_control-'+str(args.train_test_session_control),
+				'predicted_fmri', 'zscore-'+str(args.zscore), 'model-'+args.model,
+				'layer-'+args.layer, 'regression-'+args.regression,
+				'predicted_fmri_sub-0'+str(sub)+'_vertex_split-'+
+				format(vs, '03')+'.npy')
+			data = np.load(data_dir, allow_pickle=True).item()
+			if vs == 0:
+				lh_betas_nsdcore_test_pred = data['lh_betas_nsdcore_test_pred']
+				rh_betas_nsdcore_test_pred = data['rh_betas_nsdcore_test_pred']
+			else:
+				lh_betas_nsdcore_test_pred = np.append(
+					lh_betas_nsdcore_test_pred,
+					data['lh_betas_nsdcore_test_pred'], 1)
+				rh_betas_nsdcore_test_pred = np.append(
+					rh_betas_nsdcore_test_pred,
+					data['rh_betas_nsdcore_test_pred'], 1)
+			del data
 
 	# ncsnr (284 image conditions)
 	lh_ncsnr_nsdcore_test = metadata_nsdcore['lh_ncsnr_284']
 	rh_ncsnr_nsdcore_test = metadata_nsdcore['rh_ncsnr_284']
 
 	# Convert the ncsnr to noise ceiling (284 image conditions)
-	norm_term = 1 / 3
+	test_img_repeats = metadata_nsdcore['test_img_repeats']
+	img_reps_1 = len(np.where(test_img_repeats == 1)[0])
+	img_reps_2 = len(np.where(test_img_repeats == 2)[0])
+	img_reps_3 = len(np.where(test_img_repeats == 3)[0])
+	norm_term = (img_reps_1/1 + img_reps_2/2 + img_reps_3/3) / \
+		(img_reps_1 + img_reps_2 + img_reps_3)
 	lh_nc_nsdcore_test_sub = (lh_ncsnr_nsdcore_test ** 2) / \
 		((lh_ncsnr_nsdcore_test ** 2) + norm_term)
 	rh_nc_nsdcore_test_sub = (rh_ncsnr_nsdcore_test ** 2) / \
@@ -112,29 +158,46 @@ for sub in tqdm(args.subjects):
 # =============================================================================
 	# Recorded fMRI
 	data_dir = os.path.join(args.project_dir, 'results', 'fmri_betas',
-		'zscored-'+str(args.zscore), 'sub-0'+format(sub))
+		'zscore-'+str(args.zscore), 'sub-0'+format(sub))
 	lh_betas_nsdsynthetic = h5py.File(os.path.join(data_dir,
 		'lh_betas_nsdsynthetic.h5'), 'r')['betas'][:]
 	rh_betas_nsdsynthetic = h5py.File(os.path.join(data_dir,
 		'rh_betas_nsdsynthetic.h5'), 'r')['betas'][:]
-	# Set NaN values (missing fMRI data) to zero
-	lh_betas_nsdsynthetic = np.nan_to_num(lh_betas_nsdsynthetic)
-	rh_betas_nsdsynthetic = np.nan_to_num(rh_betas_nsdsynthetic)
 
 	# Predicted fMRI
-	lh_betas_nsdsynthetic_pred = data['lh_betas_nsdsynthetic_pred']
-	rh_betas_nsdsynthetic_pred = data['rh_betas_nsdsynthetic_pred']
-	del data
+	if args.regression == 'linear':
+		lh_betas_nsdsynthetic_pred = data['lh_betas_nsdsynthetic_pred']
+		rh_betas_nsdsynthetic_pred = data['rh_betas_nsdsynthetic_pred']
+	elif args.regression == 'ridge':
+		for vs in range(args.tot_vertex_splits):
+			data_dir = os.path.join(args.project_dir, 'results',
+				'train_test_session_control-'+str(args.train_test_session_control),
+				'predicted_fmri', 'zscore-'+str(args.zscore), 'model-'+args.model,
+				'layer-'+args.layer, 'regression-'+args.regression,
+				'predicted_fmri_sub-0'+str(sub)+'_vertex_split-'+
+				format(vs, '03')+'.npy')
+			data = np.load(data_dir, allow_pickle=True).item()
+			if vs == 0:
+				lh_betas_nsdsynthetic_pred = data['lh_betas_nsdsynthetic_pred']
+				rh_betas_nsdsynthetic_pred = data['rh_betas_nsdsynthetic_pred']
+			else:
+				lh_betas_nsdsynthetic_pred = np.append(
+					lh_betas_nsdsynthetic_pred,
+					data['lh_betas_nsdsynthetic_pred'], 1)
+				rh_betas_nsdsynthetic_pred = np.append(
+					rh_betas_nsdsynthetic_pred,
+					data['rh_betas_nsdsynthetic_pred'], 1)
+			del data
 
 	# ncsnr
 	data_dir = os.path.join(args.project_dir, 'results', 'fmri_betas',
-		'zscored-'+str(args.zscore), 'sub-0'+format(sub),
+		'zscore-'+str(args.zscore), 'sub-0'+format(sub),
 		'meatadata_nsdsynthetic.npy')
 	metadata_nsdsynthetic = np.load(data_dir, allow_pickle=True).item()
 	lh_ncsnr_nsdsynthetic = metadata_nsdsynthetic['lh_ncsnr']
 	rh_ncsnr_nsdsynthetic = metadata_nsdsynthetic['rh_ncsnr']
 
-	# Convert the ncsnr to noise ceiling
+        # Convert the ncsnr to noise ceiling
 	img_reps_2 = 236
 	img_reps_4 = 32
 	img_reps_8 = 8
@@ -270,8 +333,10 @@ results = {
 	'rh_explained_variance_nsdsynthetic': rh_explained_variance_nsdsynthetic
 	}
 
-save_dir = os.path.join(args.project_dir, 'results', 'encoding_accuracy',
-	'zscored-'+str(args.zscore), 'model-'+args.model)
+save_dir = os.path.join(args.project_dir, 'results',
+	'train_test_session_control-'+str(args.train_test_session_control),
+	'encoding_accuracy', 'zscore-'+str(args.zscore), 'model-'+args.model,
+	'layer-'+args.layer, 'regression-'+args.regression)
 if os.path.isdir(save_dir) == False:
 	os.makedirs(save_dir)
 

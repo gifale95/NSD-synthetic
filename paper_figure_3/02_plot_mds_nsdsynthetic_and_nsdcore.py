@@ -8,6 +8,8 @@ ncsnr_threshold : float
 	threshold are used.
 zscore : int
 	Whether to betas were z-score [1] or not [0] prior to applying MDS.
+nsd_dir : str
+	Directory of the NSD.
 project_dir : str
 	Directory of the project folder.
 
@@ -23,6 +25,7 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('--ncsnr_threshold', type=float, default=0.6)
 parser.add_argument('--zscore', type=int, default=0)
+parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 args = parser.parse_args()
 
@@ -52,7 +55,8 @@ image_class = list(image_labels['Image class'])
 # =============================================================================
 # Load the NSD-synthetic trials conditions
 # =============================================================================
-data_dir = os.path.join(args.project_dir, 'results', 'fmri_betas', 'sub-01')
+data_dir = os.path.join(args.project_dir, 'results', 'fmri_betas', 'zscore-'+
+	str(args.zscore), 'sub-01')
 masterordering = np.load(os.path.join(data_dir, 'meatadata_nsdsynthetic.npy'),
 	allow_pickle=True).item()['masterordering']
 
@@ -83,14 +87,14 @@ plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 colors = [(221/255, 204/255, 119/255), (204/255, 102/255, 119/255)]
 colors = [
-	(0.0, 1.0, 1.0), # Cyan
-	(1.0, 0.0, 0.0), # Red
-	(1.0, 0.65, 0.0), # Orange
-	(0.75, 1.0, 0.0), # Lime
-	(1.0, 0.75, 0.8), # Pink
-	(0.5, 0.0, 0.5), # Purple
-	(0.0, 0.5, 0.5), # Teal
-	(1.0, 0.84, 0.0), # Gold
+	(85/255, 220/255, 255/255), # Light blue
+	(221/255, 0/255, 50/255), # Red
+	(245/255, 126/255, 0/255), # Orange
+	(60/255, 215/255, 0/255), # Green
+	(255/255, 191/255, 204/255), # Pink
+	(127/255, 0/255, 127/255), # Purple
+	(0/255, 127/255, 127/255), # Teal
+	(255/255, 214/255, 0/255), # Gold
 	]
 
 

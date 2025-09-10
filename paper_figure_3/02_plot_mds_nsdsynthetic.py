@@ -29,8 +29,8 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 parser = argparse.ArgumentParser()
 parser.add_argument('--ncsnr_threshold', type=float, default=0.6)
 parser.add_argument('--zscore', type=int, default=0)
-parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
-parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
+parser.add_argument('--nsd_dir', default='/home/ale/scratch/datasets/natural-scenes-dataset', type=str)
+parser.add_argument('--project_dir', default='/home/ale/scratch/projects/nsd_synthetic', type=str)
 args = parser.parse_args()
 
 
@@ -38,7 +38,7 @@ args = parser.parse_args()
 # Load the MDS results
 # =============================================================================
 data_dir = os.path.join(args.project_dir, 'results', 'mds_nsdsynthetic',
-	'zscored-'+str(args.zscore), 'mds_nsdsynthetic_ncsnr_threshold-'+
+	'zscore-'+str(args.zscore), 'mds_nsdsynthetic_ncsnr_threshold-'+
 	format(args.ncsnr_threshold, '02')+'.npy')
 results = np.load(data_dir, allow_pickle=True).item()
 betas_mds = results['betas_mds']
@@ -122,14 +122,14 @@ matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 colors = [
-	(0.0, 1.0, 1.0), # Cyan
-	(1.0, 0.0, 0.0), # Red
-	(1.0, 0.65, 0.0), # Orange
-	(0.75, 1.0, 0.0), # Lime
-	(1.0, 0.75, 0.8), # Pink
-	(0.5, 0.0, 0.5), # Purple
-	(0.0, 0.5, 0.5), # Teal
-	(1.0, 0.84, 0.0), # Gold
+	(85/255, 220/255, 255/255), # Light blue
+	(221/255, 0/255, 50/255), # Red
+	(245/255, 126/255, 0/255), # Orange
+	(60/255, 215/255, 0/255), # Green
+	(255/255, 191/255, 204/255), # Pink
+	(127/255, 0/255, 127/255), # Purple
+	(0/255, 127/255, 127/255), # Teal
+	(255/255, 214/255, 0/255), # Gold
 	]
 
 
@@ -193,7 +193,7 @@ plt.yticks([])
 plt.ylim(bottom=min(betas_mds[:,1]-5), top=max(betas_mds[:,1])+5)
 
 # Save the figure
-file_name = 'mds_nsdsynthetic_all_subjects_and_vertices_zscored-' + \
+file_name = 'mds_nsdsynthetic_all_subjects_and_vertices_zscore-' + \
 	str(args.zscore) + '_ncsnr_threshold-' + \
 	format(args.ncsnr_threshold, '02') + '.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', format='svg')

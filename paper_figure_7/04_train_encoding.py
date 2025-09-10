@@ -1,7 +1,8 @@
 """Train linearizing encoding models using the NSD-core subject-unique image
 features and fMRI responses, and use them to predict fMRI responses for the:
-(i) NSD-core shared 1,000 images.
-(ii) NSD-synthetic 284 images.
+(i) NSD-core ID test images.
+(i) NSD-core OOD test images.
+(iii) NSD-synthetic 284 images.
 
 Parameters
 ----------
@@ -40,18 +41,19 @@ for key, val in vars(args).items():
 # =============================================================================
 # Load the image features and fMRI responses
 # =============================================================================
-# Load the PCA-downsampled images features
-features_dir = os.path.join(args.project_dir, 'results', 'image_features',
-	'pca_features', 'model-'+args.model, 'pca_features_sub-0'+
+# Load the PCA-downsampled image features
+features_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
+	'pca_features', 'model-'+args.model, 'layer-all', 'pca_features_sub-0'+
 	str(args.subject)+'.npy')
 features = np.load(features_dir, allow_pickle=True).item()
 features_nsdcore_train = features['features_nsdcore_train']
-features_nsdcore_test = features['features_nsdcore_test']
+features_nsdcore_test_id = features['features_nsdcore_test_id']
+features_nsdcore_test_ood = features['features_nsdcore_test_ood']
 features_nsdsynthetic = features['features_nsdsynthetic']
 
 # Load the fMRI responses
-data_dir = os.path.join(args.project_dir, 'results', 'fmri_betas',
-	'zscored-'+str(args.zscore), 'sub-0'+format(args.subject))
+data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
+	'fmri_betas', 'zscore-'+str(args.zscore), 'sub-0'+format(args.subject))
 lh_betas_nsdcore_train = h5py.File(os.path.join(data_dir,
 	'lh_betas_nsdcore_train.h5'), 'r')['betas'][:]
 rh_betas_nsdcore_train = h5py.File(os.path.join(data_dir,
@@ -61,15 +63,11 @@ rh_betas_nsdcore_train = h5py.File(os.path.join(data_dir,
 # =============================================================================
 # Train the encoding models, and predict fMRI responses for the test images
 # =============================================================================
-# For each fMRI vertex, train a linear regression using (i) its fMRI responses
-# for the NSD-core subject-unique images as the criterion, and (ii) the
-# corresponding image features as the predictor. Then, use the trained weights
-# to predict the vertex responses for the NSD-core shared 1,000 images and the
-# 284 NSD-synthetic images.
-
-# Set NaN values (missing fMRI data) to zero
-lh_betas_nsdcore_train = np.nan_to_num(lh_betas_nsdcore_train)
-rh_betas_nsdcore_train = np.nan_to_num(rh_betas_nsdcore_train)
+# For each fMRI vertex, train a linear regression using the fMRI responses
+# for the NSD-core training images as the criterion, and the corresponding image
+# features as the predictor. Then, use the trained weights to predict the vertex
+# responses for the NSD-core ID and OOD test images, and for the 284
+# NSD-synthetic images.
 
 # Train encoding models using the NSD-core subject-unique images: fit the
 # regression models at each fMRI vertex
@@ -77,8 +75,10 @@ lh_reg = LinearRegression().fit(features_nsdcore_train, lh_betas_nsdcore_train)
 rh_reg = LinearRegression().fit(features_nsdcore_train, rh_betas_nsdcore_train)
 
 # Use the learned weights to predict fMRI responses
-lh_betas_nsdcore_test_pred = lh_reg.predict(features_nsdcore_test)
-rh_betas_nsdcore_test_pred = rh_reg.predict(features_nsdcore_test)
+lh_betas_nsdcore_test_id_pred = lh_reg.predict(features_nsdcore_test_id)
+rh_betas_nsdcore_test_id_pred = rh_reg.predict(features_nsdcore_test_id)
+lh_betas_nsdcore_test_ood_pred = lh_reg.predict(features_nsdcore_test_ood)
+rh_betas_nsdcore_test_ood_pred = rh_reg.predict(features_nsdcore_test_ood)
 lh_betas_nsdsynthetic_pred = lh_reg.predict(features_nsdsynthetic)
 rh_betas_nsdsynthetic_pred = rh_reg.predict(features_nsdsynthetic)
 
@@ -87,14 +87,16 @@ rh_betas_nsdsynthetic_pred = rh_reg.predict(features_nsdsynthetic)
 # Save the predicted betas
 # =============================================================================
 predicted_fmri = {
-	'lh_betas_nsdcore_test_pred': lh_betas_nsdcore_test_pred,
-	'rh_betas_nsdcore_test_pred': rh_betas_nsdcore_test_pred,
+	'lh_betas_nsdcore_test_id_pred': lh_betas_nsdcore_test_id_pred,
+	'rh_betas_nsdcore_test_id_pred': rh_betas_nsdcore_test_id_pred,
+	'lh_betas_nsdcore_test_ood_pred': lh_betas_nsdcore_test_ood_pred,
+	'rh_betas_nsdcore_test_ood_pred': rh_betas_nsdcore_test_ood_pred,
 	'lh_betas_nsdsynthetic_pred': lh_betas_nsdsynthetic_pred,
 	'rh_betas_nsdsynthetic_pred': rh_betas_nsdsynthetic_pred
 	}
 
-save_dir = os.path.join(args.project_dir, 'results', 'predicted_fmri',
-	'zscored-'+str(args.zscore), 'model-'+args.model)
+save_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
+	'predicted_fmri', 'zscore-'+str(args.zscore), 'model-'+args.model)
 if os.path.isdir(save_dir) == False:
 	os.makedirs(save_dir)
 

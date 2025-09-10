@@ -57,7 +57,7 @@ for roi in tqdm(args.rois):
 # Load the metadata
 # =============================================================================
 		data_dir = os.path.join(args.project_dir, 'results', 'fmri_betas',
-			'zscored-'+str(args.zscore), 'sub-0'+format(sub))
+			'zscore-'+str(args.zscore), 'sub-0'+format(sub))
 		metadata = np.load(os.path.join(data_dir,
 			'meatadata_nsdsynthetic.npy'), allow_pickle=True).item()
 		lh_ncsnr = metadata['lh_ncsnr']
@@ -176,7 +176,7 @@ results = {
 	}
 
 save_dir = os.path.join(args.project_dir, 'results', 'nsdsynthetic_responses',
-	'zscored-'+str(args.zscore))
+	'zscore-'+str(args.zscore))
 if os.path.isdir(save_dir) == False:
 	os.makedirs(save_dir)
 

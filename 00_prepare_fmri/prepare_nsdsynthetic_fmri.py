@@ -7,10 +7,10 @@ subject : int
 zscore : int
 	Whether to z-score [1] or not [0] the fMRI responses of each vertex across
 	the trials of each session.
-nsd_dir : str
-	Directory of the NSD.
 project_dir : str
 	Directory of the project folder.
+nsd_dir : str
+	Directory of the NSD.
 
 """
 
@@ -27,8 +27,8 @@ import h5py
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
 parser.add_argument('--zscore', type=int, default=0)
-parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
+parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
 args = parser.parse_args()
 
 print('>>> Prepare NSD-synthetic betas <<<')
@@ -80,7 +80,7 @@ for i, img in enumerate(nsdsynthetic_img_num):
 
 
 # =============================================================================
-# Compute the ncsnr
+# Compute the ncsnr (all image classes)
 # =============================================================================
 # When computing the ncsnr on image conditions with different amounts of trials
 # (i.e., different sample sizes), I need to correct for this:
@@ -92,14 +92,14 @@ den_var = np.zeros((lh_betas_all.shape[1]))
 
 for i, img in enumerate(nsdsynthetic_img_num):
 	idx = np.where(masterordering == img)[0]
-	lh_num_var += np.var(lh_betas_all[idx], axis=0, ddof=1) * (len(idx) - 1)
-	rh_num_var += np.var(rh_betas_all[idx], axis=0, ddof=1) * (len(idx) - 1)
+	lh_num_var += np.nanvar(lh_betas_all[idx], axis=0, ddof=1) * (len(idx) - 1)
+	rh_num_var += np.nanvar(rh_betas_all[idx], axis=0, ddof=1) * (len(idx) - 1)
 	den_var += len(idx) - 1
 
 lh_sigma_noise = np.sqrt(lh_num_var/den_var)
 rh_sigma_noise = np.sqrt(rh_num_var/den_var)
-lh_var_data = np.var(lh_betas_all, axis=0, ddof=1)
-rh_var_data = np.var(rh_betas_all, axis=0, ddof=1)
+lh_var_data = np.nanvar(lh_betas_all, axis=0, ddof=1)
+rh_var_data = np.nanvar(rh_betas_all, axis=0, ddof=1)
 lh_sigma_signal = lh_var_data - (lh_sigma_noise ** 2)
 rh_sigma_signal = rh_var_data - (rh_sigma_noise ** 2)
 lh_sigma_signal[lh_sigma_signal<0] = 0
@@ -108,6 +108,57 @@ lh_sigma_signal = np.sqrt(lh_sigma_signal)
 rh_sigma_signal = np.sqrt(rh_sigma_signal)
 lh_ncsnr = lh_sigma_signal / lh_sigma_noise
 rh_ncsnr = rh_sigma_signal / rh_sigma_noise
+
+
+# =============================================================================
+# Compute the ncsnr (independently for each image class)
+# =============================================================================
+# Load the NSD-synthetic image classes
+labels_dir = os.path.join(args.nsd_dir, 'nsddata', 'experiments',
+	'nsdsynthetic', 'nsdsyntheticimageinformation.csv')
+image_labels = pd.read_csv(labels_dir, sep=',')
+unique_classes = list(set(image_labels['Image class']))
+unique_classes.sort()
+
+# Compute the ncsnr independently for each image class
+lh_ncsnr_classes = {}
+rh_ncsnr_classes = {}
+for cl in unique_classes:
+	# Get all images from the given class
+	nsdsynthetic_class_img_num = \
+		[i for i, item in enumerate(list(image_labels['Image class'])) if item == cl]
+	# Compute the ncsnr
+	lh_num_var = np.zeros((lh_betas_all.shape[1]))
+	rh_num_var = np.zeros((rh_betas_all.shape[1]))
+	den_var = np.zeros((lh_betas_all.shape[1]))
+	for i, img in enumerate(nsdsynthetic_class_img_num):
+		idx = np.where(masterordering == img)[0]
+		lh_num_var += np.nanvar(lh_betas_all[idx], axis=0, ddof=1) \
+			* (len(idx) - 1)
+		rh_num_var += np.nanvar(rh_betas_all[idx], axis=0, ddof=1) \
+			* (len(idx) - 1)
+		den_var += len(idx) - 1
+		# Select only trials of the images from the given class
+		if i == 0:
+			lh_betas_all_class = lh_betas_all[idx]
+			rh_betas_all_class = rh_betas_all[idx]
+		else:
+			lh_betas_all_class = np.append(lh_betas_all_class,
+				lh_betas_all[idx], 0)
+			rh_betas_all_class = np.append(rh_betas_all_class,
+				rh_betas_all[idx], 0)
+	lh_sigma_noise = np.sqrt(lh_num_var/den_var)
+	rh_sigma_noise = np.sqrt(rh_num_var/den_var)
+	lh_var_data = np.nanvar(lh_betas_all_class, axis=0, ddof=1)
+	rh_var_data = np.nanvar(rh_betas_all_class, axis=0, ddof=1)
+	lh_sigma_signal = lh_var_data - (lh_sigma_noise ** 2)
+	rh_sigma_signal = rh_var_data - (rh_sigma_noise ** 2)
+	lh_sigma_signal[lh_sigma_signal<0] = 0
+	rh_sigma_signal[rh_sigma_signal<0] = 0
+	lh_sigma_signal = np.sqrt(lh_sigma_signal)
+	rh_sigma_signal = np.sqrt(rh_sigma_signal)
+	lh_ncsnr_classes[cl] = lh_sigma_signal / lh_sigma_noise
+	rh_ncsnr_classes[cl] = rh_sigma_signal / rh_sigma_noise
 
 
 # =============================================================================
@@ -121,9 +172,13 @@ for i, img in enumerate(nsdsynthetic_img_num):
 	lh_betas[i] = np.nanmean(lh_betas_all[idx], 0)
 	rh_betas[i] = np.nanmean(rh_betas_all[idx], 0)
 
+# Set NaN values (missing fMRI data) to zero
+lh_betas = np.nan_to_num(lh_betas)
+rh_betas = np.nan_to_num(rh_betas)
+
 # Save the betas
 save_dir = os.path.join(args.project_dir, 'results', 'fmri_betas',
-	'zscored-'+str(args.zscore), 'sub-0'+format(args.subject))
+	'zscore-'+str(args.zscore), 'sub-0'+format(args.subject))
 if not os.path.isdir(save_dir):
 	os.makedirs(save_dir)
 with h5py.File(os.path.join(save_dir, 'lh_betas_nsdsynthetic.h5'), 'w') as f:
@@ -181,8 +236,10 @@ metadata = {
 	'nsdsynthetic_img_repeats': nsdsynthetic_img_repeats,
 	'lh_ncsnr': lh_ncsnr,
 	'rh_ncsnr': rh_ncsnr,
+	'lh_ncsnr_classes': lh_ncsnr_classes,
+	'rh_ncsnr_classes': rh_ncsnr_classes,
 	'lh_fsaverage_rois': lh_fsaverage_rois,
-	'rh_fsaverage_rois': rh_fsaverage_rois,
+	'rh_fsaverage_rois': rh_fsaverage_rois
 	}
 
 np.save(os.path.join(save_dir, 'meatadata_nsdsynthetic.npy'), metadata)

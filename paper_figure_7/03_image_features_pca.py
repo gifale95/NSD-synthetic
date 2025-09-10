@@ -4,9 +4,6 @@ Parameters
 ----------
 subject : int
 	Number of the used NSD subject.
-train_test_session_control : int
-	If '1', use the train and test splits consist of image conditions from
-	non-overlapping fMRI scan sessions.
 model : str
 	Name of deep neural network model used to extract the image features.
 	Available options are 'alexnet', 'resnet50', 'moco', and 'vit_b_32'.
@@ -33,8 +30,7 @@ from sklearn.decomposition import PCA
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
-parser.add_argument('--train_test_session_control', type=int, default=0)
-parser.add_argument('--model', default='alexnet', type=str)
+parser.add_argument('--model', default='vit_b_32', type=str)
 parser.add_argument('--layer', default='all', type=str)
 parser.add_argument('--n_components', default=250, type=int)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
@@ -87,14 +83,13 @@ elif args.model == 'vit_b_32':
 
 
 # =============================================================================
-# Load the metadata
+# Load the train/test splits
 # =============================================================================
-data_dir = os.path.join(args.project_dir, 'results',
-	'train_test_session_control-'+str(args.train_test_session_control),
-	'fmri_betas', 'zscore-0', 'sub-0'+format(args.subject))
+data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
+	'nsdcore_train_test_splits', 'zscore-0',
+	'nsdcore_train_test_splits_subject-'+format(args.subject, '02') + '.npy')
 
-metadata_nsdcore = np.load(os.path.join(data_dir, 'meatadata_nsdcore.npy'),
-	allow_pickle=True).item()
+train_test_splits = np.load(data_dir, allow_pickle=True).item()
 
 
 # =============================================================================
@@ -104,7 +99,8 @@ features_dir = os.path.join(args.project_dir, 'results', 'image_features',
 	'full_features', 'model-'+args.model, 'nsdcore')
 
 features_nsdcore_train = []
-for i in tqdm(metadata_nsdcore['train_img_num']):
+train_img_num = train_test_splits['train_img_num']
+for i in tqdm(train_img_num):
 	features = np.load(os.path.join(features_dir, 'img_'+format(i,'06')+'.npy'),
 		allow_pickle=True).item()
 	if args.layer == 'all':
@@ -130,28 +126,55 @@ features_nsdcore_train = pca.transform(features_nsdcore_train)
 
 
 # =============================================================================
-# NSD-core test image features
+# NSD-core ID test image features
 # =============================================================================
-features_nsdcore_test = []
-for i in tqdm(metadata_nsdcore['test_img_num']):
+features_nsdcore_test_id = []
+test_img_num_id = train_test_splits['test_img_num_id']
+for i in tqdm(test_img_num_id):
 	features = np.load(os.path.join(features_dir, 'img_'+format(i,'06')+'.npy'),
 		allow_pickle=True).item()
 	if args.layer == 'all':
 		ft = np.empty(0, dtype=np.float32)
 		for layer in layers:
 			ft = np.append(ft, np.reshape(features[layer], -1))
-		features_nsdcore_test.append(ft)
+		features_nsdcore_test_id.append(ft)
 		del ft
 	else:
-		features_nsdcore_test.append(np.reshape(features[args.layer], -1))
+		features_nsdcore_test_id.append(np.reshape(features[args.layer], -1))
 	del features
-features_nsdcore_test = np.asarray(features_nsdcore_test)
+features_nsdcore_test_id = np.asarray(features_nsdcore_test_id)
 
 # Z-score the image features
-features_nsdcore_test = scaler.transform(features_nsdcore_test)
+features_nsdcore_test_id = scaler.transform(features_nsdcore_test_id)
 
 # Downsample the features with PCA
-features_nsdcore_test = pca.transform(features_nsdcore_test)
+features_nsdcore_test_id = pca.transform(features_nsdcore_test_id)
+
+
+# =============================================================================
+# NSD-core OOD test image features
+# =============================================================================
+features_nsdcore_test_ood = []
+test_img_num_ood = train_test_splits['test_img_num_ood']
+for i in tqdm(test_img_num_ood):
+	features = np.load(os.path.join(features_dir, 'img_'+format(i,'06')+'.npy'),
+		allow_pickle=True).item()
+	if args.layer == 'all':
+		ft = np.empty(0, dtype=np.float32)
+		for layer in layers:
+			ft = np.append(ft, np.reshape(features[layer], -1))
+		features_nsdcore_test_ood.append(ft)
+		del ft
+	else:
+		features_nsdcore_test_ood.append(np.reshape(features[args.layer], -1))
+	del features
+features_nsdcore_test_ood = np.asarray(features_nsdcore_test_ood)
+
+# Z-score the image features
+features_nsdcore_test_ood = scaler.transform(features_nsdcore_test_ood)
+
+# Downsample the features with PCA
+features_nsdcore_test_ood = pca.transform(features_nsdcore_test_ood)
 
 
 # =============================================================================
@@ -210,13 +233,14 @@ features_nsdsynthetic = pca.transform(features_nsdsynthetic)
 # =============================================================================
 image_features = {
 	'features_nsdcore_train': features_nsdcore_train,
-	'features_nsdcore_test': features_nsdcore_test,
+	'features_nsdcore_test_id': features_nsdcore_test_id,
+	'features_nsdcore_test_ood': features_nsdcore_test_ood,
 	'features_nsdsynthetic': features_nsdsynthetic
 	}
 
-save_dir = os.path.join(args.project_dir, 'results',
-	'train_test_session_control-'+str(args.train_test_session_control),
-	'image_features', 'pca_features', 'model-'+args.model, 'layer-'+args.layer)
+save_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
+	'pca_features', 'model-'+args.model, 'layer-'+args.layer)
+
 if os.path.isdir(save_dir) == False:
 	os.makedirs(save_dir)
 

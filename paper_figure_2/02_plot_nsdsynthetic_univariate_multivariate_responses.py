@@ -42,7 +42,7 @@ args = parser.parse_args()
 # Load the results
 # =============================================================================
 results_dir = os.path.join(args.project_dir, 'results',
-	'nsdsynthetic_responses', 'zscored-'+str(args.zscore),
+	'nsdsynthetic_responses', 'zscore-'+str(args.zscore),
 	'nsdsynthetic_responses_ncsnr_threshold-'+
 	format(args.ncsnr_threshold, '02')+'.npy')
 

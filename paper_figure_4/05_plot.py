@@ -5,12 +5,24 @@ Parameters
 ----------
 subjects : list
 	List of the used NSD subjects.
+train_test_session_control : int
+	If '1', use the train and test splits consist of image conditions from
+	non-overlapping fMRI scan sessions.
 zscore : int
 	Whether to z-score [1] or not [0] the fMRI responses of each vertex across
 	the trials of each session.
 model : str
 	Name of deep neural network model used to extract the image features.
 	Available options are 'alexnet', 'resnet50', 'moco', and 'vit_b_32'.
+layer : str
+	If 'all', train the encoding models on the features from all model layers.
+	If a layer name is given, the encoding models are trained on the features of
+	that layer.
+regression : str
+	If 'linear', the encoding models will consist of linear regressions that
+	predict fMRI responses using PCA-downsampled image features as predictors.
+	If 'ridge', the encoding models will consist of ridge regressions that
+	predict fMRI responses using full image features as predictors.
 project_dir : str
 	Directory of the project folder.
 
@@ -24,11 +36,15 @@ import cortex
 import cortex.polyutils
 import matplotlib
 import matplotlib.pyplot as plt
+from scipy.stats import ttest_1samp
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=int, default=[1, 2, 3, 4, 5, 6, 7, 8])
+parser.add_argument('--train_test_session_control', type=int, default=0)
 parser.add_argument('--zscore', type=int, default=0)
 parser.add_argument('--model', default='alexnet', type=str)
+parser.add_argument('--layer', default='all', type=str)
+parser.add_argument('--regression', default='linear', type=str)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 args = parser.parse_args()
 
@@ -36,20 +52,28 @@ args = parser.parse_args()
 # =============================================================================
 # Load the encoding accuracy results
 # =============================================================================
-data_dir = os.path.join(args.project_dir, 'results', 'encoding_accuracy',
-	'zscored-'+str(args.zscore), 'model-'+args.model, 'encoding_accuracy.npy')
+data_dir = os.path.join(args.project_dir, 'results',
+	'train_test_session_control-'+str(args.train_test_session_control),
+	'encoding_accuracy', 'zscore-'+str(args.zscore), 'model-'+args.model,
+	'layer-'+args.layer, 'regression-'+args.regression, 'encoding_accuracy.npy')
 results = np.load(data_dir, allow_pickle=True).item()
 
 
 # =============================================================================
-# Plot parameters for colorbar
+# Plot parameters
 # =============================================================================
+# Plot parameters for colorbar
 plt.rc('xtick', labelsize=19)
 plt.rc('ytick', labelsize=19)
 matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 subject = 'fsaverage'
+
+# Plot file names
+param = 'train_test_session_control-' + str(args.train_test_session_control) + \
+	'_model-'+args.model + '_layer-'+args.layer + '_regression-' + \
+	args.regression
 
 
 # =============================================================================
@@ -72,14 +96,15 @@ fig = cortex.quickshow(vertex_data,
 	with_colorbar=True
 	)
 plt.show()
-file_name = 'nsdcore_r2_model-' + args.model + '.svg'
+file_name = 'nsdcore_r2_' + param + '.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 	format='svg')
+plt.close()
 
 # Noise ceiling
 nc_core = np.append(
-	np.nanmean(results['lh_nc_nsdcore_test_284'], 0),
-	np.nanmean(results['rh_nc_nsdcore_test_284'], 0))
+	np.nanmean(results['lh_nc_nsdcore_test'], 0),
+	np.nanmean(results['rh_nc_nsdcore_test'], 0))
 vertex_data = cortex.Vertex(nc_core, subject, cmap='hot', vmin=0, vmax=.8,
 	with_colorbar=True)
 fig = cortex.quickshow(vertex_data,
@@ -93,20 +118,21 @@ fig = cortex.quickshow(vertex_data,
 	with_colorbar=True
 	)
 plt.show()
-file_name = 'nsdcore_noise_ceiling.svg'
+file_name = 'nsdcore_' + param + '_noise_ceiling.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 	format='svg')
+plt.close()
 
 # Explained variance
 expl_var_core = []
 for s in range(len(args.subjects)):
 	# Load the explained variance scores
-	lh_data = copy(results['lh_explained_variance_nsdcore_test_284'][s])
-	rh_data = copy(results['rh_explained_variance_nsdcore_test_284'][s])
+	lh_data = copy(results['lh_explained_variance_nsdcore_test'][s])
+	rh_data = copy(results['rh_explained_variance_nsdcore_test'][s])
 	# Remove vertices with noise ceiling values below a threshold, since they
 	# cannot be interpreted in terms of modeling
-	lh_idx = results['lh_nc_nsdcore_test_284'][s] < 0.3
-	rh_idx = results['rh_nc_nsdcore_test_284'][s] < 0.3
+	lh_idx = results['lh_nc_nsdcore_test'][s] < 0.3
+	rh_idx = results['rh_nc_nsdcore_test'][s] < 0.3
 	lh_data[lh_idx] = np.nan
 	rh_data[rh_idx] = np.nan
 	# Store the data
@@ -125,9 +151,12 @@ fig = cortex.quickshow(vertex_data,
 	with_colorbar=True
 	)
 plt.show()
-file_name = 'nsdcore_explained_variance_model-' + args.model + '.svg'
+file_name = 'nsdcore_explained_variance_' + param + '.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 	format='svg')
+plt.close()
+# Print the mean encoding accuracy
+print(np.nanmean(expl_var_core))
 
 
 # =============================================================================
@@ -150,9 +179,10 @@ fig = cortex.quickshow(vertex_data,
 	with_colorbar=True
 	)
 plt.show()
-file_name = 'nsdsynthetic_r2_model-' + args.model + '.svg'
+file_name = 'nsdsynthetic_r2_' + param + '.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 	format='svg')
+plt.close()
 
 # Noise ceiling
 nc_synt = np.append(
@@ -171,9 +201,10 @@ fig = cortex.quickshow(vertex_data,
 	with_colorbar=True
 	)
 plt.show()
-file_name = 'nsdsynthetic_noise_ceiling.svg'
+file_name = 'nsdsynthetic_' + param + '_noise_ceiling.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 	format='svg')
+plt.close()
 
 # Explained variance
 expl_var_synt = []
@@ -203,9 +234,12 @@ fig = cortex.quickshow(vertex_data,
 	with_colorbar=True
 	)
 plt.show()
-file_name = 'nsdsynthetic_explained_variance_model-' + args.model + '.svg'
+file_name = 'nsdsynthetic_explained_variance_' + param + '.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 	format='svg')
+plt.close()
+# Print the mean encoding accuracy
+print(np.nanmean(expl_var_synt))
 
 
 # =============================================================================
@@ -216,15 +250,15 @@ fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 delta_expl_var = []
 for s in range(len(args.subjects)):
 	# Compute the difference between NSD-core and NSD-synthetic
-	lh_data = results['lh_explained_variance_nsdcore_test_284'][s] - \
+	lh_data = results['lh_explained_variance_nsdcore_test'][s] - \
 		results['lh_explained_variance_nsdsynthetic'][s]
-	rh_data = results['rh_explained_variance_nsdcore_test_284'][s] - \
+	rh_data = results['rh_explained_variance_nsdcore_test'][s] - \
 		results['rh_explained_variance_nsdsynthetic'][s]
 	# Remove vertices with noise ceiling values below a threshold across both
 	# NSD-synthetic and NSD-core, since they cannot be interpreted in terms of
 	# modeling
-	lh_idx_core = results['lh_nc_nsdcore_test_284'][s] > 0.3
-	rh_idx_core = results['rh_nc_nsdcore_test_284'][s] > 0.3
+	lh_idx_core = results['lh_nc_nsdcore_test'][s] > 0.3
+	rh_idx_core = results['rh_nc_nsdcore_test'][s] > 0.3
 	lh_idx_synt = results['lh_nc_nsdsynthetic'][s] > 0.3
 	rh_idx_synt = results['rh_nc_nsdsynthetic'][s] > 0.3
 	lh_idx = np.logical_and(lh_idx_core, lh_idx_synt)
@@ -250,25 +284,64 @@ fig = cortex.quickshow(vertex_data,
 	with_colorbar=True
 	)
 plt.show()
-file_name = 'nsdcore_minus_nsdsynthetic_explained_variance_model-' + \
-	args.model + '.svg'
+file_name = 'nsdcore_minus_nsdsynthetic_explained_variance_' + param + '.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 	format='svg')
+plt.close()
+
+# Compute the p-value of the difference
+print(np.nanmean(delta_expl_var))
+delta_expl_var_mean = np.nanmean(delta_expl_var, 1)
+pval = ttest_1samp(delta_expl_var_mean, 0, alternative='greater')[1]
 
 
 # =============================================================================
 # Scatterplot of vertex-wise r² scores against the noise ceiling
 # =============================================================================
+# Load the visual stream ROI indices
+data_dir = os.path.join(args.project_dir, 'results',
+	'train_test_session_control-'+str(args.train_test_session_control),
+	'fmri_betas', 'zscore-'+str(args.zscore), 'sub-01', 'meatadata_nsdcore.npy')
+metadata = np.load(data_dir, allow_pickle=True).item()
+# Left hemisphere
+lh_streams = {}
+lh_streams['early'] = metadata['lh_fsaverage_rois']['early']
+intermediate = []
+intermediate.append(metadata['lh_fsaverage_rois']['midventral'])
+intermediate.append(metadata['lh_fsaverage_rois']['midlateral'])
+intermediate.append(metadata['lh_fsaverage_rois']['midparietal'])
+intermediate = np.concatenate(intermediate)
+intermediate.sort()
+lh_streams['intermediate'] = intermediate
+lh_streams['ventral'] = metadata['lh_fsaverage_rois']['ventral']
+lh_streams['lateral'] = metadata['lh_fsaverage_rois']['lateral']
+lh_streams['parietal'] = metadata['lh_fsaverage_rois']['parietal']
+# Right hemisphere
+rh_streams = {}
+rh_streams['early'] = metadata['rh_fsaverage_rois']['early']
+intermediate = []
+intermediate.append(metadata['rh_fsaverage_rois']['midventral'])
+intermediate.append(metadata['rh_fsaverage_rois']['midlateral'])
+intermediate.append(metadata['rh_fsaverage_rois']['midparietal'])
+intermediate = np.concatenate(intermediate)
+intermediate.sort()
+rh_streams['intermediate'] = intermediate
+rh_streams['ventral'] = metadata['rh_fsaverage_rois']['ventral']
+rh_streams['lateral'] = metadata['rh_fsaverage_rois']['lateral']
+rh_streams['parietal'] = metadata['rh_fsaverage_rois']['parietal']
+
 # Get the results
 r2_synthetic = []
 r2_core = []
 nc_synthetic = []
 nc_core = []
+roi = []
+colors = []
 for s in range(len(args.subjects)):
 	# Only retain results for vertices with noise ceiling above threshold in
 	# both NSD-synthetic and NSD-core
-	lh_idx_core = results['lh_nc_nsdcore_test_284'][s] > 0.3
-	rh_idx_core = results['rh_nc_nsdcore_test_284'][s] > 0.3
+	lh_idx_core = results['lh_nc_nsdcore_test'][s] > 0.3
+	rh_idx_core = results['rh_nc_nsdcore_test'][s] > 0.3
 	lh_idx_synt = results['lh_nc_nsdsynthetic'][s] > 0.3
 	rh_idx_synt = results['rh_nc_nsdsynthetic'][s] > 0.3
 	lh_idx = np.logical_and(lh_idx_core, lh_idx_synt)
@@ -280,8 +353,30 @@ for s in range(len(args.subjects)):
 	r2_core.append(results['rh_r2_nsdcore_test'][s][rh_idx])
 	nc_synthetic.append(results['lh_nc_nsdsynthetic'][s][lh_idx])
 	nc_synthetic.append(results['rh_nc_nsdsynthetic'][s][rh_idx])
-	nc_core.append(results['lh_nc_nsdcore_test_284'][s][lh_idx])
-	nc_core.append(results['rh_nc_nsdcore_test_284'][s][rh_idx])
+	nc_core.append(results['lh_nc_nsdcore_test'][s][lh_idx])
+	nc_core.append(results['rh_nc_nsdcore_test'][s][rh_idx])
+	# Assign each vertex to its ROI
+	idx = np.append(np.where(lh_idx)[0], np.where(rh_idx)[0])
+	for i in idx:
+		if i in lh_streams['early']:
+			roi.append('early')
+			colors.append((67/255, 147/255, 195/255))
+		elif i in lh_streams['intermediate']:
+			roi.append('intermediate')
+			colors.append((209/255, 230/255, 241/255))
+		elif i in lh_streams['ventral']:
+			roi.append('ventral')
+			colors.append((253/255, 219/255, 199/255))
+		elif i in lh_streams['lateral']:
+			roi.append('lateral')
+			colors.append((214/255, 96/255, 77/255))
+		elif i in lh_streams['parietal']:
+			roi.append('parietal')
+			colors.append((103/255, 0/255, 31/255))
+		else:
+			roi.append('none')
+			colors.append((75/255, 75/255, 75/255))
+# Concatenate the results across subejcts
 r2_synthetic = np.concatenate(r2_synthetic)
 r2_core = np.concatenate(r2_core)
 nc_synthetic = np.concatenate(nc_synthetic)
@@ -309,31 +404,29 @@ matplotlib.rcParams['grid.alpha'] = .3
 matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
-colors = [(128/255, 42/255, 51/255), (200/255, 150/255, 20/255)]
 
 # Plot the r² scores against the noise ceiling scores
 fig, axs = plt.subplots(figsize=(21, 13), nrows=1, ncols=2, sharex=True,
 	sharey=True)
 axs = np.reshape(axs, (-1))
 for i in range(len(axs)):
-	# Plot diagonal dashed line
-	axs[i].plot(np.arange(-1,1.1,.1), np.arange(-1,1.1,.1), '--k', linewidth=2,
-		alpha=.5, label='_nolegend_')
 	# Plot the results
 	if i == 0:
 		# Vertex-wise results
-		axs[i].scatter(nc_core, r2_core, s=5, color=colors[0], alpha=.1)
+		axs[i].scatter(nc_core, r2_core, s=1, color=colors, alpha=1)
 		# Vertex-median results
 		axs[i].scatter(np.median(nc_core), np.median(r2_core), s=300,
-			marker='X', color='k', alpha=1)
+			marker='X', color='k', alpha=1, zorder=2)
 	elif i == 1:
 		# Vertex-wise results
-		axs[i].scatter(nc_synthetic, r2_synthetic, s=5, color=colors[0],
-			alpha=.1)
+		axs[i].scatter(nc_synthetic, r2_synthetic, s=1, color=colors, alpha=1)
 		# Vertex-median results
 		axs[i].scatter(np.median(nc_synthetic), np.median(r2_synthetic), s=300,
-			marker='X', color='k', alpha=1)
+			marker='X', color='k', alpha=1, zorder=2)
 	axs[i].set_aspect('equal')
+	# Plot diagonal dashed line
+	axs[i].plot(np.arange(-1,1.1,.1), np.arange(-1,1.1,.1), '--k', linewidth=2,
+		alpha=.5, label='_nolegend_', zorder=1)
 	# y-axis
 	if i in [0]:
 		ticks = [0.2, 0.4, 0.6, 0.8, 1]
@@ -348,17 +441,12 @@ for i in range(len(axs)):
 		axs[i].set_xlabel('Noise ceiling ($r²$)', fontsize=fontsize)
 		plt.xticks(ticks=ticks, labels=labels, fontsize=fontsize)
 	axs[i].set_xlim(left=0, right=1)
-	# Title
-	if i == 0:
-		title = 'NSD-core'
-	elif i == 1:
-		title = 'NSD-synthetic'
-	axs[i].set_title(title, fontsize=fontsize)
+
 # Save the figure
-file_name = 'encoding_accuracy_scatterplots_model-' + args.model + '.svg'
+file_name = 'encoding_accuracy_scatterplots_' + param + '.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 	format='svg')
-file_name = 'encoding_accuracy_scatterplots_model-' + args.model + '.png'
-fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
+file_name = 'encoding_accuracy_scatterplots_' + param + '.png'
+fig.savefig(file_name, dpi=600, bbox_inches='tight', transparent=True,
 	format='png')
-
+plt.close()

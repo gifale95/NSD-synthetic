@@ -31,8 +31,8 @@ from tqdm import tqdm
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default='alexnet', type=str)
-parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
+parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
 args = parser.parse_args()
 
 print('>>> Extract image features NSD-synthetic <<<')
@@ -173,9 +173,11 @@ for s in tqdm(stimuli_files):
 			img = img.to(device)
 			# Extract the features
 			ft = feature_extractor(img)
-			# Flatten the features
-			ft = torch.hstack([torch.flatten(l, start_dim=1) for l in ft.values()])
+			# Format the features
+			ft_dict = {}
+			for key, val in ft.items():
+				ft_dict[key] = np.squeeze(val.cpu().detach().numpy())
+			# Save the features
 			file_name = 'img_' + format(i, '06') + '.npy'
-			np.save(os.path.join(save_dir, file_name),
-				np.squeeze(ft.cpu().detach().numpy()))
-			del ft
+			np.save(os.path.join(save_dir, file_name), ft_dict)
+			del ft, ft_dict

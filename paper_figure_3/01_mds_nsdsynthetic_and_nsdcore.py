@@ -50,16 +50,17 @@ for s, sub in enumerate(args.subjects):
 # Load the ncsnr
 # =============================================================================
 	# NSD-synthetic
-	data_dir = os.path.join(args.project_dir, 'results', 'fmri_betas', 'sub-0'+
-		format(sub))
+	data_dir = os.path.join(args.project_dir, 'results', 'fmri_betas',
+		'zscore-'+str(args.zscore), 'sub-0'+format(sub))
 	metadata = np.load(os.path.join(data_dir, 'meatadata_nsdsynthetic.npy'),
 		allow_pickle=True).item()
 	lh_ncsnr_nsdsynthetic = metadata['lh_ncsnr']
 	rh_ncsnr_nsdsynthetic = metadata['rh_ncsnr']
 
-	# NSD-synthetic
-	data_dir = os.path.join(args.project_dir, 'results', 'fmri_betas', 'sub-0'+
-		format(sub))
+	# NSD-core
+	data_dir = os.path.join(args.project_dir, 'results',
+		'train_test_session_control-0', 'fmri_betas', 'zscore-'+
+		str(args.zscore), 'sub-0'+format(sub))
 	metadata = np.load(os.path.join(data_dir, 'meatadata_nsdcore.npy'),
 		allow_pickle=True).item()
 	lh_ncsnr_nsdcore = metadata['lh_ncsnr']
