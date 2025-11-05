@@ -6,6 +6,9 @@ Parameters
 ----------
 subject : int
 	Number of the used NSD subject.
+data_ood_selection : str
+	If 'fmri', the ID/OD splits are defined based on fMRI responses.
+	If 'dnn', the ID/OD splits are defined based on DNN features.
 zscore : int
 	Whether to z-score [1] or not [0] the fMRI responses of each vertex across
 	the trials of each session.
@@ -29,6 +32,7 @@ import h5py
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
+parser.add_argument('--data_ood_selection', default='fmri', type=str)
 parser.add_argument('--zscore', type=int, default=0)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
@@ -112,8 +116,8 @@ for s in tqdm(range(sessions)):
 # Load NSD-core's train/test splits
 # =============================================================================
 data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'nsdcore_train_test_splits',  'zscore-'+str(args.zscore),
-	'nsdcore_train_test_splits_subject-'+format(args.subject, '02') + '.npy')
+	'nsdcore_train_test_splits', 'data_ood_selection-'+args.data_ood_selection,
+	'nsdcore_train_test_splits_subject-' + format(args.subject, '02') + '.npy')
 
 train_test_splits = np.load(data_dir, allow_pickle=True).item()
 
@@ -122,8 +126,11 @@ train_test_splits = np.load(data_dir, allow_pickle=True).item()
 # Save the train and test split betas
 # =============================================================================
 splits = ['test_img_num_ood', 'test_img_num_id', 'train_img_num']
+
 save_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'fmri_betas', 'zscore-'+str(args.zscore), 'sub-0'+format(args.subject))
+	'fmri_betas', 'data_ood_selection-'+args.data_ood_selection, 'sub-0'+
+	format(args.subject))
+
 if not os.path.isdir(save_dir):
 	os.makedirs(save_dir)
 
@@ -311,4 +318,4 @@ metadata = {
 	'rh_fsaverage_rois': rh_fsaverage_rois
 	}
 
-np.save(os.path.join(save_dir, 'meatadata_nsdcore.npy'), metadata)
+np.save(os.path.join(save_dir, 'metadata_nsdcore.npy'), metadata)

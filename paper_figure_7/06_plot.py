@@ -5,12 +5,16 @@ Parameters
 ----------
 subjects : list
 	List of the used NSD subjects.
-zscore : int
-	Whether to z-score [1] or not [0] the fMRI responses of each vertex across
-	the trials of each session.
+data_ood_selection : str
+	If 'fmri', the ID/OD splits are defined based on fMRI responses.
+	If 'dnn', the ID/OD splits are defined based on DNN features.
 model : str
 	Name of deep neural network model used to extract the image features.
 	Available options are 'alexnet', 'resnet50', 'moco', and 'vit_b_32'.
+layer : str
+	If 'all', train the encoding models on the features from all model layers.
+	If a layer name is given, the encoding models are trained on the features of
+	that layer.
 project_dir : str
 	Directory of the project folder.
 
@@ -27,8 +31,9 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=int, default=[1, 2, 3, 4, 5, 6, 7, 8])
-parser.add_argument('--zscore', type=int, default=0)
+parser.add_argument('--data_ood_selection', default='dnn', type=str)
 parser.add_argument('--model', default='vit_b_32', type=str)
+parser.add_argument('--layer', default='all', type=str)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 args = parser.parse_args()
 
@@ -66,7 +71,8 @@ color_border = (127/255, 127/255, 127/255)
 
 # Load the MDS results
 dat_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'mds_all_subjects', 'zscore-'+str(args.zscore), 'mds.npy')
+	'mds_all_subjects', 'data_ood_selection-'+args.data_ood_selection,
+	'mds.npy')
 mds = np.load(dat_dir, allow_pickle=True).item()
 
 # Create the figure
@@ -99,7 +105,7 @@ plt.xticks([])
 plt.yticks([])
 
 # Save the figure
-file_name = 'mds.svg'
+file_name = 'mds_data_ood_selection-' + args.data_ood_selection + '.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 	format='svg')
 plt.close()
@@ -118,8 +124,8 @@ subject = 'fsaverage'
 
 # Load the encoding accuracy results
 data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'encoding_accuracy', 'zscore-'+str(args.zscore), 'model-'+args.model,
-	'encoding_accuracy.npy')
+	'encoding_accuracy', 'data_ood_selection-'+args.data_ood_selection,
+	'model-'+args.model, 'layer-'+args.layer, 'encoding_accuracy.npy')
 results = np.load(data_dir, allow_pickle=True).item()
 
 # Plot the NSD-core ID generalization
@@ -159,7 +165,9 @@ fig = cortex.quickshow(vertex_data,
 	)
 plt.show()
 # Save the figure
-file_name = 'explained_variance_nsdcore_id_model-' + args.model + '.svg'
+file_name = 'explained_variance_nsdcore_id_data_ood_selection-' + \
+	args.data_ood_selection + '_model-' + args.model + '_layer-'+args.layer + \
+	'.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 	format='svg')
 plt.close()
@@ -203,7 +211,9 @@ fig = cortex.quickshow(vertex_data,
 	)
 plt.show()
 # Save the figure
-file_name = 'explained_variance_nsdcore_ood_model-' + args.model + '.svg'
+file_name = 'explained_variance_nsdcore_ood_data_ood_selection-' + \
+	args.data_ood_selection + '_model-' + args.model + '_layer-'+args.layer + \
+	'.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 	format='svg')
 plt.close()
@@ -247,7 +257,9 @@ fig = cortex.quickshow(vertex_data,
 	)
 plt.show()
 # Save the figure
-file_name = 'explained_variance_nsdsynthetic_model-' + args.model + '.svg'
+file_name = 'explained_variance_nsdsynthetic_data_ood_selection-' + \
+	args.data_ood_selection + '_model-' + args.model + '_layer-'+args.layer + \
+	'.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 	format='svg')
 plt.close()
@@ -256,7 +268,7 @@ print('\n>>> Voxel average score NSD-synthetic: ' + str(np.nanmean(expl_var)))
 
 
 # =============================================================================
-# Plot the image identification accuracy
+# Plot the zero-shot identification accuracy
 # =============================================================================
 # Plot parameters
 alpha_chance = .5
@@ -286,10 +298,11 @@ plt.rcParams['svg.fonttype'] = 'none'
 colors = [(204/255, 102/255, 0/255), (221/255, 204/255, 119/255),
 	(51/255, 153/255, 153/255)]
 
-# Load the identification results
+# Load the zero-shot identification results
 data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'image_identification_accuracy', 'zscore-'+str(args.zscore), 'model-'+
-	args.model, 'image_identification_accuracy.npy')
+	'image_identification_accuracy', 'data_ood_selection-'+
+	args.data_ood_selection, 'model-'+args.model, 'layer-'+args.layer,
+	'image_identification_accuracy.npy')
 results = np.load(data_dir, allow_pickle=True).item()
 
 # Create the figure
@@ -313,7 +326,7 @@ for i in range(len(conditions)):
 		scores = results['rank_nsdsynthetic'].flatten() + 1
 
 	# Plot the chance lines
-	plt.plot([i-0.25, i+0.25], [142, 142], '--k', linewidth=2,
+	plt.plot([i-0.25, i+0.25], [426, 426], '--k', linewidth=2,
 		alpha=alpha_chance, zorder=1)
 
 	# Plot the image identification accuracies
@@ -344,14 +357,14 @@ for i in range(len(conditions)):
 	plt.scatter(x, np.mean(scores), s=500, color=colors[i], alpha=1,
 		edgecolors='k', linewidths=2, zorder=2)
 	scores_mean.append(int(np.round(np.mean(scores))))
-	plt.text(x, np.mean(scores)+10, scores_mean[i], ha='center')
+	plt.text(x, np.mean(scores)+30, scores_mean[i], ha='center')
 
 # y-axis
-ticks = [1, 71, 142, 213, 284]
-labels = [1, 71, 142, 213, 284]
+ticks = [1, 213, 426, 639, 852]
+labels = [1, 213, 426, 639, 852]
 plt.yticks(ticks=ticks, labels=labels)
 plt.ylabel('Correct image rank', fontsize=fontsize)
-plt.ylim(bottom=1, top=284)
+plt.ylim(bottom=1, top=852)
 
 # x-axis
 ticks = np.arange(len(conditions))
@@ -362,7 +375,9 @@ plt.xlabel('Test conditions', fontsize=fontsize)
 plt.xlim(left=-0.6, right=2.6)
 
 # Save the figure
-file_name = 'identification_accuracy_model-' + args.model + '.svg'
+file_name = 'identification_accuracy_data_ood_selection-' + \
+	args.data_ood_selection + '_model-' + args.model + '_layer-'+args.layer + \
+	'.svg'
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 	format='svg')
 plt.close()

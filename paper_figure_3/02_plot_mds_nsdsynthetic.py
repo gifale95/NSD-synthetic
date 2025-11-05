@@ -29,8 +29,8 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 parser = argparse.ArgumentParser()
 parser.add_argument('--ncsnr_threshold', type=float, default=0.6)
 parser.add_argument('--zscore', type=int, default=0)
-parser.add_argument('--nsd_dir', default='/home/ale/scratch/datasets/natural-scenes-dataset', type=str)
-parser.add_argument('--project_dir', default='/home/ale/scratch/projects/nsd_synthetic', type=str)
+parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
+parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 args = parser.parse_args()
 
 

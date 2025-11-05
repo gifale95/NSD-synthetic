@@ -5,12 +5,19 @@ Parameters
 ----------
 subjects : list
 	List of the used NSD subjects.
+data_ood_selection : str
+	If 'fmri', the ID/OD splits are defined based on fMRI responses.
+	If 'dnn', the ID/OD splits are defined based on DNN features.
 zscore : int
 	Whether to z-score [1] or not [0] the fMRI responses of each vertex across
 	the trials of each session.
 model : str
 	Name of deep neural network model used to extract the image features.
 	Available options are 'alexnet', 'resnet50', 'moco', and 'vit_b_32'.
+layer : str
+	If 'all', train the encoding models on the features from all model layers.
+	If a layer name is given, the encoding models are trained on the features of
+	that layer.
 project_dir : str
 	Directory of the project folder.
 
@@ -25,8 +32,10 @@ from scipy.stats import pearsonr
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
+parser.add_argument('--data_ood_selection', default='fmri', type=str)
 parser.add_argument('--zscore', type=int, default=0)
 parser.add_argument('--model', default='alexnet', type=str)
+parser.add_argument('--layer', default='all', type=str)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 args = parser.parse_args()
 
@@ -73,13 +82,12 @@ for sub in tqdm(args.subjects):
 # =============================================================================
 	# Load the metadata
 	data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-		'fmri_betas', 'zscore-'+str(args.zscore), 'sub-0'+str(sub),
-		'meatadata_nsdcore.npy')
-	metadata_nsdcore = np.load(data_dir, allow_pickle=True).item()
+		'fmri_betas', 'data_ood_selection-'+args.data_ood_selection, 'sub-0'+
+		format(sub))
+	metadata_nsdcore = np.load(os.path.join(data_dir, 'metadata_nsdcore.npy'),
+		allow_pickle=True).item()
 
 	# Recorded fMRI
-	data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-		'fmri_betas', 'zscore-'+str(args.zscore), 'sub-0'+str(sub))
 	lh_betas_nsdcore_test_id = h5py.File(os.path.join(data_dir,
 		'lh_betas_nsdcore_test_id.h5'), 'r')['betas'][:]
 	rh_betas_nsdcore_test_id = h5py.File(os.path.join(data_dir,
@@ -91,8 +99,9 @@ for sub in tqdm(args.subjects):
 
 	# Predicted fMRI
 	data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-		'predicted_fmri', 'zscore-'+str(args.zscore), 'model-'+args.model,
-		'predicted_fmri_sub-0'+str(sub)+'.npy')
+		'predicted_fmri', 'data_ood_selection-'+args.data_ood_selection,
+		'model-'+args.model, 'layer-'+args.layer, 'predicted_fmri_sub-0'+
+		str(sub)+'.npy')
 	data = np.load(data_dir, allow_pickle=True).item()
 	lh_betas_nsdcore_test_id_pred = data['lh_betas_nsdcore_test_id_pred']
 	rh_betas_nsdcore_test_id_pred = data['rh_betas_nsdcore_test_id_pred']
@@ -344,7 +353,8 @@ results = {
 	}
 
 save_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'encoding_accuracy', 'zscore-'+str(args.zscore), 'model-'+args.model)
+	'encoding_accuracy', 'data_ood_selection-'+args.data_ood_selection,
+	'model-'+args.model, 'layer-'+args.layer)
 if os.path.isdir(save_dir) == False:
 	os.makedirs(save_dir)
 

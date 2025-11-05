@@ -28,6 +28,8 @@ from tqdm import tqdm
 import h5py
 from scipy.stats import pearsonr
 import pandas as pd
+from sklearn.utils import resample
+import random
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
@@ -42,6 +44,11 @@ print('>>> Image condition identification <<<')
 print('\nInput parameters:')
 for key, val in vars(args).items():
 	print('{:16} {}'.format(key, val))
+
+# Set random seed for reproducible results
+seed = 20200220
+np.random.seed(seed)
+random.seed(seed)
 
 
 # =============================================================================
@@ -128,16 +135,68 @@ for s, sub in enumerate(tqdm(args.subjects)):
 # =============================================================================
 # Get the identification rank of each image condition
 # =============================================================================
-	rank_nsdsynthetic_sub = np.zeros(len(betas_nsdsynthetic), dtype=np.int32)
+# To mitigate the risk of the identification results reflecting imbalances
+# between the number of images in each NSD-synthetic image class, each image
+# is ranked based on its correlation scores with 8 images from each image class
+# (since every class has at least 8 images), for a total of 64 images. The
+# identification algorithm is iterated N times, while each time computing the
+# rankings using the correlations with a different random sample of 8 images per
+# class. The final identification accuracies consist of the average across these
+# N iterations.
 
-	# Get the identification rank of each image condition
-	for i in range(len(correlation_matrix_sub)):
-		rank_nsdsynthetic_sub[i] = np.where(np.argsort(
-			correlation_matrix_sub[i])[::-1] == i)[0][0]
+	# Identification parameters and empty results variable
+	min_img = 8
+	n_iter = 1000
+	rank_nsdsynthetic_sub = np.zeros((len(correlation_matrix_sub), n_iter),
+		dtype=np.int32)
+
+	# Get image class indices
+	class_img_idx = {}
+	for cl in unique_classes:
+		class_img_num = \
+			[i for i, item in enumerate(list(image_labels['Image class'])) if item == cl]
+		class_img_idx[cl] = np.asarray(class_img_num)
+
+	# Loop across images
+	for i in tqdm(range(len(correlation_matrix_sub))):
+
+		# Get the correlations scores of the target image
+		correlations = correlation_matrix_sub[i]
+
+		# Loop across iterations
+		for it in range(n_iter):
+
+			# Randomly select the correlations of 8 images from each image
+			# class, while ensuring that the target image is within the 8 images
+			# of the corresponding image class
+			candidate_img = np.empty(0).astype(np.float32)
+			for cl in unique_classes:
+				data = correlations[class_img_idx[cl]]
+				# If the target image is from the current image class
+				if i in class_img_idx[cl]:
+					idx_target = np.where(class_img_idx[cl] == i)[0][0]
+					data = np.delete(data, idx_target)
+					n_samples = min(min_img, len(data))
+					corr = resample(data, replace=False, n_samples=n_samples)
+					# Add the target image
+					if n_samples < min_img:
+						corr = np.insert(corr, 0, correlations[i])
+					else:
+						corr[0] = correlations[i]
+					idx_correct = len(candidate_img)
+				# If the target image is not from the current image class
+				else:
+					corr = resample(data, replace=False, n_samples=min_img)
+				candidate_img = np.append(candidate_img, corr)
+
+			# Get the identification rank of each image condition
+			rank_nsdsynthetic_sub[i] = np.where(np.argsort(
+				candidate_img)[::-1] == idx_correct)[0][0]
+
 	del correlation_matrix_sub
 
-	# Store the identification ranks
-	rank_nsdsynthetic.append(rank_nsdsynthetic_sub)
+	# Store the identification ranks (averaged across the N iterations)
+	rank_nsdsynthetic.append(np.mean(rank_nsdsynthetic_sub, 1))
 
 
 # =============================================================================

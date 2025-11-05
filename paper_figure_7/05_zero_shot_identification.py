@@ -1,4 +1,4 @@
-"""Test the image condition identification accuracy of the encoding model's in
+"""Test the zero-shot identification accuracy of the encoding model's in
 silico neural responses for NSD-core's ID and OOD images, and for
 NSD-synthetic's images.
 
@@ -6,6 +6,9 @@ Parameters
 ----------
 subjects : list
 	List of the used NSD subjects.
+data_ood_selection : str
+	If 'fmri', the ID/OD splits are defined based on fMRI responses.
+	If 'dnn', the ID/OD splits are defined based on DNN features.
 ncsnr_threshold : float
 	Lower bound ncsnr threshold of the kept vertices: only vertices above this
 	threshold are used.
@@ -15,6 +18,10 @@ zscore : int
 model : str
 	Name of deep neural network model used to extract the image features.
 	Available options are 'alexnet', 'resnet50', 'moco', and 'vit_b_32'.
+layer : str
+	If 'all', train the encoding models on the features from all model layers.
+	If a layer name is given, the encoding models are trained on the features of
+	that layer.
 project_dir : str
 	Directory of the project folder.
 
@@ -29,13 +36,15 @@ from scipy.stats import pearsonr
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
+parser.add_argument('--data_ood_selection', default='fmri', type=str)
 parser.add_argument('--ncsnr_threshold', type=float, default=0.6)
 parser.add_argument('--zscore', type=int, default=0)
 parser.add_argument('--model', default='alexnet', type=str)
+parser.add_argument('--layer', default='all', type=str)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 args = parser.parse_args()
 
-print('>>> Image condition identification <<<')
+print('>>> Zero-shot identification <<<')
 print('\nInput parameters:')
 for key, val in vars(args).items():
 	print('{:16} {}'.format(key, val))
@@ -71,8 +80,8 @@ for s, sub in enumerate(tqdm(args.subjects)):
 
 	# NSD-core
 	metadata_dir = os.path.join(args.project_dir, 'results',
-		'nsdcore_id_ood_tests', 'fmri_betas', 'zscore-'+str(args.zscore),
-		'sub-0'+str(sub), 'meatadata_nsdcore.npy')
+		'nsdcore_id_ood_tests', 'fmri_betas', 'data_ood_selection-'+
+		args.data_ood_selection, 'sub-0'+str(sub), 'metadata_nsdcore.npy')
 	metadata = np.load(metadata_dir, allow_pickle=True).item()
 	lh_ncsnr_nsdcore = metadata['lh_ncsnr']
 	rh_ncsnr_nsdcore = metadata['rh_ncsnr']
@@ -90,7 +99,8 @@ for s, sub in enumerate(tqdm(args.subjects)):
 # =============================================================================
 	# Recorded fMRI
 	data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-		'fmri_betas', 'zscore-'+str(args.zscore), 'sub-0'+str(sub))
+		'fmri_betas', 'data_ood_selection-'+args.data_ood_selection, 'sub-0'+
+		format(sub))
 	lh_betas_nsdcore_test_id = h5py.File(os.path.join(data_dir,
 		'lh_betas_nsdcore_test_id.h5'), 'r')['betas'][:,lh_idx]
 	rh_betas_nsdcore_test_id = h5py.File(os.path.join(data_dir,
@@ -102,8 +112,9 @@ for s, sub in enumerate(tqdm(args.subjects)):
 
 	# Predicted fMRI
 	data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-		'predicted_fmri', 'zscore-'+str(args.zscore), 'model-'+args.model,
-		'predicted_fmri_sub-0'+str(sub)+'.npy')
+		'predicted_fmri', 'data_ood_selection-'+args.data_ood_selection,
+		'model-'+args.model, 'layer-'+args.layer, 'predicted_fmri_sub-0'+
+		str(sub)+'.npy')
 	data = np.load(data_dir, allow_pickle=True).item()
 	lh_betas_nsdcore_test_id_pred = data['lh_betas_nsdcore_test_id_pred'][:,lh_idx]
 	rh_betas_nsdcore_test_id_pred = data['rh_betas_nsdcore_test_id_pred'][:,rh_idx]
@@ -188,18 +199,19 @@ for s, sub in enumerate(tqdm(args.subjects)):
 	rank_nsdsynthetic_sub = np.zeros(img_per_split, dtype=np.int32)
 
 	# Split the correlation matrix into test splits
-	correlation_matrix_nsdcoreid = correlation_matrix_sub[:284,:284]
-	correlation_matrix_nsdcoreood = correlation_matrix_sub[284:568,284:568]
-	correlation_matrix_nsdsynthetic = correlation_matrix_sub[568:,568:]
+	correlation_matrix_nsdcoreid = correlation_matrix_sub[:284]
+	correlation_matrix_nsdcoreood = correlation_matrix_sub[284:568]
+	correlation_matrix_nsdsynthetic = correlation_matrix_sub[568:]
 
-	# Get the identification rank of each image condition
+	# Get the identification rank of each image condition (where the candidate
+	# images consist of all images from the three test splits)
 	for i in range(len(correlation_matrix_nsdcoreid)):
 		rank_nsdcoreid_sub[i] = np.where(np.argsort(
 			correlation_matrix_nsdcoreid[i])[::-1] == i)[0][0]
 		rank_nsdcoreood_sub[i] = np.where(np.argsort(
-			correlation_matrix_nsdcoreood[i])[::-1] == i)[0][0]
+			correlation_matrix_nsdcoreood[i])[::-1] == i+img_per_split)[0][0]
 		rank_nsdsynthetic_sub[i] = np.where(np.argsort(
-			correlation_matrix_nsdsynthetic[i])[::-1] == i)[0][0]
+			correlation_matrix_nsdsynthetic[i])[::-1] == i+img_per_split*2)[0][0]
 	del correlation_matrix_sub
 
 	# Store the identification ranks
@@ -229,8 +241,8 @@ results = {
 	}
 
 save_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'image_identification_accuracy', 'zscore-'+str(args.zscore),
-	'model-'+args.model)
+	'image_identification_accuracy', 'data_ood_selection-'+
+	args.data_ood_selection, 'model-'+args.model, 'layer-'+args.layer)
 if os.path.isdir(save_dir) == False:
 	os.makedirs(save_dir)
 

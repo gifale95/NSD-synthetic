@@ -2,8 +2,9 @@
 
 Parameters
 ----------
-subject : int
-	Number of the used NSD subject.
+data_ood_selection : str
+	If 'fmri', the ID/OD splits are defined based on fMRI responses.
+	If 'dnn', the ID/OD splits are defined based on DNN features.
 nsd_dir : str
 	Directory of the NSD.
 project_dir : str
@@ -24,6 +25,7 @@ from PIL import Image
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
+parser.add_argument('--data_ood_selection', default='fmri', type=str)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
 args = parser.parse_args()
@@ -46,8 +48,8 @@ sdataset = sf.get('imgBrick')
 # Load the train/test splits
 # =============================================================================
 data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'nsdcore_train_test_splits', 'zscore-0',
-	'nsdcore_train_test_splits_subject-'+format(args.subject, '02') + '.npy')
+	'nsdcore_train_test_splits', 'data_ood_selection-'+args.data_ood_selection,
+	'nsdcore_train_test_splits_subject-'+format(args.subject, '02')+'.npy')
 
 train_test_splits = np.load(data_dir, allow_pickle=True).item()
 
@@ -56,7 +58,7 @@ train_test_splits = np.load(data_dir, allow_pickle=True).item()
 # Save directory
 # =============================================================================
 save_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'nsdcore_test_images')
+	'nsdcore_test_images', 'data_ood_selection-'+args.data_ood_selection)
 
 if os.path.isdir(save_dir) == False:
 	os.makedirs(save_dir)

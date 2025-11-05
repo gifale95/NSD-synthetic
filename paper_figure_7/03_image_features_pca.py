@@ -4,6 +4,9 @@ Parameters
 ----------
 subject : int
 	Number of the used NSD subject.
+data_ood_selection : str
+	If 'fmri', the ID/OD splits are defined based on fMRI responses.
+	If 'dnn', the ID/OD splits are defined based on DNN features.
 model : str
 	Name of deep neural network model used to extract the image features.
 	Available options are 'alexnet', 'resnet50', 'moco', and 'vit_b_32'.
@@ -30,7 +33,8 @@ from sklearn.decomposition import PCA
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
-parser.add_argument('--model', default='vit_b_32', type=str)
+parser.add_argument('--data_ood_selection', default='fmri', type=str)
+parser.add_argument('--model', default='alexnet', type=str)
 parser.add_argument('--layer', default='all', type=str)
 parser.add_argument('--n_components', default=250, type=int)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
@@ -86,8 +90,8 @@ elif args.model == 'vit_b_32':
 # Load the train/test splits
 # =============================================================================
 data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'nsdcore_train_test_splits', 'zscore-0',
-	'nsdcore_train_test_splits_subject-'+format(args.subject, '02') + '.npy')
+	'nsdcore_train_test_splits', 'data_ood_selection-'+args.data_ood_selection,
+	'nsdcore_train_test_splits_subject-'+format(args.subject, '02')+'.npy')
 
 train_test_splits = np.load(data_dir, allow_pickle=True).item()
 
@@ -239,7 +243,8 @@ image_features = {
 	}
 
 save_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'pca_features', 'model-'+args.model, 'layer-'+args.layer)
+	'pca_features', 'data_ood_selection-'+args.data_ood_selection, 'model-'+
+	args.model, 'layer-'+args.layer)
 
 if os.path.isdir(save_dir) == False:
 	os.makedirs(save_dir)

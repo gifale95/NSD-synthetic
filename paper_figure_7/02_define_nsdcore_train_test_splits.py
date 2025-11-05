@@ -5,9 +5,18 @@ Parameters
 ----------
 subject : int
 	Number of the used subject.
+data_ood_selection : str
+	If 'fmri', the ID/OD splits are defined based on fMRI responses.
+	If 'dnn', the ID/OD splits are defined based on DNN features.
 zscore : int
 	Whether to z-score [1] or not [0] the fMRI responses of each vertex across
 	the trials of each session.
+model : str
+	Name of deep neural network model used to extract the image features.
+	Available options are 'alexnet', 'resnet50', 'moco', and 'vit_b_32'.
+layer : str
+	If 'all', apply PCA on the features from all model layers. If a layer name
+	is given, PCA is applied on the features of that layer.
 project_dir : str
 	Directory of the project folder.
 nsd_dir : str
@@ -26,7 +35,10 @@ from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
+parser.add_argument('--data_ood_selection', default='dnn', type=str)
 parser.add_argument('--zscore', type=int, default=0)
+parser.add_argument('--model', default='vit_b_32', type=str)
+parser.add_argument('--layer', default='all', type=str)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
 args = parser.parse_args()
@@ -73,22 +85,29 @@ img_presentation_order = subjectim[args.subject-1,masterordering[0]][:tot_images
 # =============================================================================
 # Load the MDS results
 # =============================================================================
-data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'mds_single_subjects', 'zscore-'+str(args.zscore), 'betas_mds_subject-'+
-	format(args.subject, '02')+'.npy')
+if args.data_ood_selection == 'fmri':
+	data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
+		'mds_single_subjects', 'data_ood_selection-'+args.data_ood_selection,
+		'zscore-'+str(args.zscore), 'mds_subject-'+format(args.subject, '02')+
+		'.npy')
+elif args.data_ood_selection == 'dnn':
+	data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
+		'mds_single_subjects', 'data_ood_selection-'+args.data_ood_selection,
+		'model-'+args.model, 'layer-'+args.layer, 'mds_subject-'+
+		format(args.subject, '02')+'.npy')
 
 data = np.load(data_dir, allow_pickle=True).item()
-betas_mds = data['betas_mds']
+data_mds = data['data_mds']
 
 
 # =============================================================================
-# Apply k-means clustering on the fMRI responses in MDS space
+# Apply k-means clustering on the fMRI/DNN responses in MDS space
 # =============================================================================
 n_clusters = 15
 kmeans = KMeans(n_clusters=n_clusters, n_init=10, max_iter=1000,
 	random_state=20200220)
 
-kmeans.fit(betas_mds)
+kmeans.fit(data_mds)
 
 cluster_centers = kmeans.cluster_centers_
 labels = kmeans.labels_
@@ -115,7 +134,7 @@ distance = np.zeros((len(idx_ood_image_num), len(idx_id_image_num)))
 for i1, idx_1 in enumerate(tqdm(idx_ood_image_num)):
 	for i2, idx_2 in enumerate(idx_id_image_num):
 		distance[i1,i2] = np.sum(np.sqrt(np.square(
-			betas_mds[idx_1] - betas_mds[idx_2])))
+			data_mds[idx_1] - data_mds[idx_2])))
 # Average the Euclidean distances across all ID images
 distance = np.mean(distance, 1)
 
@@ -132,15 +151,15 @@ for i, img in enumerate(test_img_num_ood):
 	idx = np.where(img_presentation_order == img)[0]
 	test_img_ood_repeats[i] = len(idx)
 
-# Plot the fMRI responses in MDS space
-plt.figure()
-plt.scatter(betas_mds[:,0], betas_mds[:,1], s=20, color='k')
-for i in range(len(betas_mds)):
-	if labels[i] == ood_cluster_label:
-		plt.scatter(betas_mds[i,0], betas_mds[i,1], s=20, color='green')
-for idx in idx_ood_image_num[idx_test_img]:
-	plt.scatter(betas_mds[idx,0], betas_mds[idx,1], s=20, color='blue')
-plt.scatter(cluster_centers[:,0], cluster_centers[:,1], s=100, color='red')
+# Plot the responses in MDS space
+# plt.figure()
+# plt.scatter(data_mds[:,0], data_mds[:,1], s=20, color='k')
+# for i in range(len(data_mds)):
+# 	if labels[i] == ood_cluster_label:
+# 		plt.scatter(data_mds[i,0], data_mds[i,1], s=20, color='green')
+# for idx in idx_ood_image_num[idx_test_img]:
+# 	plt.scatter(data_mds[idx,0], data_mds[idx,1], s=20, color='blue')
+# plt.scatter(cluster_centers[:,0], cluster_centers[:,1], s=100, color='red')
 
 
 # =============================================================================
@@ -183,13 +202,13 @@ results = {
 	'test_img_ood_repeats': test_img_ood_repeats,
 	'test_img_id_repeats': test_img_id_repeats,
 	'train_img_repeats': train_img_repeats,
-	'betas_mds': betas_mds,
+	'data_mds': data_mds,
 	'labels': labels,
 	'cluster_centers': cluster_centers
 	}
 
 save_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'nsdcore_train_test_splits', 'zscore-'+str(args.zscore))
+	'nsdcore_train_test_splits', 'data_ood_selection-'+args.data_ood_selection)
 
 if not os.path.isdir(save_dir):
 	os.makedirs(save_dir)

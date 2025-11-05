@@ -5,9 +5,9 @@ Parameters
 ----------
 subjects : list
 	List of the used NSD subjects.
-zscore : int
-	Whether to z-score [1] or not [0] the fMRI responses of each vertex across
-	the trials of each session.
+data_ood_selection : str
+	If 'fmri', the ID/OD splits are defined based on fMRI responses.
+	If 'dnn', the ID/OD splits are defined based on DNN features.
 ncsnr_threshold : float
 	Lower bound ncsnr threshold of the kept vertices: only vertices above this
 	threshold are used.
@@ -23,7 +23,7 @@ from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
-parser.add_argument('--zscore', type=int, default=0)
+parser.add_argument('--data_ood_selection', default='fmri', type=str)
 parser.add_argument('--ncsnr_threshold', type=float, default=0.6)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 args = parser.parse_args()
@@ -42,8 +42,8 @@ betas_mds_single_sub = []
 for s, sub in enumerate(args.subjects):
 
 	data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-		'mds_all_subjects', 'zscore-'+str(args.zscore), 'betas_mds_subject-'+
-		str(sub)+'.npy')
+		'mds_all_subjects', 'data_ood_selection-'+args.data_ood_selection,
+		'mds_subject-'+str(sub)+'.npy')
 
 	betas_mds_single_sub.append(np.load(data_dir))
 
@@ -52,7 +52,8 @@ for s, sub in enumerate(args.subjects):
 # Load the subject average
 # =============================================================================
 data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'mds_all_subjects', 'zscore-'+str(args.zscore), 'betas_mds_subject-all.npy')
+	'mds_all_subjects', 'data_ood_selection-'+args.data_ood_selection,
+	'mds_subject-all.npy')
 
 betas_mds_all_sub = np.load(data_dir)
 
@@ -111,7 +112,7 @@ results = {
 	}
 
 save_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'mds_all_subjects', 'zscore-'+str(args.zscore))
+	'mds_all_subjects', 'data_ood_selection-'+args.data_ood_selection)
 
 if not os.path.isdir(save_dir):
 	os.makedirs(save_dir)

@@ -107,7 +107,7 @@ if args.train_test_session_control == 0:
 	test_img_num.sort()
 
 # Alternatively, if controlling the train and test split image conditions to
-# come from non overlapping scan session, teh test split consists of 284 image
+# come from non overlapping scan session, the test split consists of 284 image
 # conditions that uniquely appear in the last 5 scan sessions of each subject,
 # whereas the train split consists of all image conditions presented in the scan
 # sessions before the last 5 sessions.

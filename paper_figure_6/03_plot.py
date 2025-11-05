@@ -33,7 +33,7 @@ parser.add_argument('--subjects', type=int, default=[1, 2, 3, 4, 5, 6, 7, 8])
 parser.add_argument('--zscore', type=int, default=0)
 parser.add_argument('--model', default='alexnet', type=str)
 parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
-parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
+parser.add_argument('--project_dir', default='../projects/nsd_synthetic', type=str)
 args = parser.parse_args()
 
 
@@ -311,7 +311,7 @@ for i, cl in enumerate(img_classes):
 		color = colors[7]
 
 	# Plot the chance lines
-	plt.plot([i-0.25, i+0.25], [142, 142], '--k', linewidth=2,
+	plt.plot([i-0.25, i+0.25], [32, 32], '--k', linewidth=2,
 		alpha=alpha_chance, zorder=1)
 
 	# Plot the image identification accuracies
@@ -341,14 +341,14 @@ for i, cl in enumerate(img_classes):
 	plt.scatter(x, mean_rank_nsdsynthetic_classes, s=500, color=color, alpha=1,
 		edgecolors='k', linewidths=2, zorder=2)
 	scores_mean.append(int(np.round(mean_rank_nsdsynthetic_classes)))
-	plt.text(x, mean_rank_nsdsynthetic_classes+10, scores_mean[i], ha='center')
+	plt.text(x, mean_rank_nsdsynthetic_classes+2, scores_mean[i], ha='center')
 
 # y-axis
-ticks = [1, 71, 142, 213, 284]
-labels = [1, 71, 142, 213, 284]
+ticks = [1, 16, 32, 48, 64]
+labels = [1, 16, 32, 48, 64]
 plt.yticks(ticks=ticks, labels=labels)
 plt.ylabel('Correct image rank', fontsize=fontsize)
-plt.ylim(bottom=1, top=284)
+plt.ylim(bottom=1, top=64)
 
 # x-axis
 ticks = np.arange(len(img_classes))
@@ -588,11 +588,11 @@ for i, cl in enumerate(img_classes):
 	plt.scatter(np.mean(mds[:,i]), np.mean(identification[:,i]), s=3000,
 		color=color, linewidths=0, edgecolors=color_border, alpha=1, zorder=3)
 # y-axis
-ticks = [50, 100, 150, 200]
-labels = [50, 100, 150, 200]
+ticks = [10, 20, 30, 40, 50]
+labels = [10, 20, 30, 40, 50]
 plt.yticks(ticks=ticks, labels=labels)
 plt.ylabel('Correct image rank', fontsize=fontsize)
-plt.ylim(bottom=1, top=150)
+plt.ylim(bottom=1, top=30)
 # x-axis
 ticks = [175, 425, 675]
 labels = [175, 425, 675]

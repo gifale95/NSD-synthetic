@@ -194,4 +194,4 @@ metadata = {
 	'rh_fsaverage_rois': rh_fsaverage_rois
 	}
 
-np.save(os.path.join(save_dir, 'meatadata_nsdcore.npy'), metadata)
+np.save(os.path.join(save_dir, 'metadata_nsdcore.npy'), metadata)

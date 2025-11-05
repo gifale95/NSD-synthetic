@@ -8,12 +8,16 @@ Parameters
 ----------
 subject : int
 	Number of the used NSD subject.
-zscore : int
-	Whether to z-score [1] or not [0] the fMRI responses of each vertex across
-	the trials of each session.
+data_ood_selection : str
+	If 'fmri', the ID/OD splits are defined based on fMRI responses.
+	If 'dnn', the ID/OD splits are defined based on DNN features.
 model : str
 	Name of deep neural network model used to extract the image features.
 	Available options are 'alexnet', 'resnet50', 'moco', and 'vit_b_32'.
+layer : str
+	If 'all', train the encoding models on the features from all model layers.
+	If a layer name is given, the encoding models are trained on the features of
+	that layer.
 project_dir : str
 	Directory of the project folder.
 
@@ -27,8 +31,9 @@ from sklearn.linear_model import LinearRegression
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
-parser.add_argument('--zscore', type=int, default=0)
+parser.add_argument('--data_ood_selection', default='fmri', type=str)
 parser.add_argument('--model', default='alexnet', type=str)
+parser.add_argument('--layer', default='all', type=str)
 parser.add_argument('--project_dir', default='../nsd_synthetic', type=str)
 args = parser.parse_args()
 
@@ -43,8 +48,9 @@ for key, val in vars(args).items():
 # =============================================================================
 # Load the PCA-downsampled image features
 features_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'pca_features', 'model-'+args.model, 'layer-all', 'pca_features_sub-0'+
-	str(args.subject)+'.npy')
+	'pca_features', 'data_ood_selection-'+args.data_ood_selection, 'model-'+
+	args.model, 'layer-'+args.layer, 'pca_features_sub-0'+str(args.subject)+
+	'.npy')
 features = np.load(features_dir, allow_pickle=True).item()
 features_nsdcore_train = features['features_nsdcore_train']
 features_nsdcore_test_id = features['features_nsdcore_test_id']
@@ -53,7 +59,8 @@ features_nsdsynthetic = features['features_nsdsynthetic']
 
 # Load the fMRI responses
 data_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'fmri_betas', 'zscore-'+str(args.zscore), 'sub-0'+format(args.subject))
+	'fmri_betas', 'data_ood_selection-'+args.data_ood_selection,
+	'sub-0'+format(args.subject))
 lh_betas_nsdcore_train = h5py.File(os.path.join(data_dir,
 	'lh_betas_nsdcore_train.h5'), 'r')['betas'][:]
 rh_betas_nsdcore_train = h5py.File(os.path.join(data_dir,
@@ -96,7 +103,8 @@ predicted_fmri = {
 	}
 
 save_dir = os.path.join(args.project_dir, 'results', 'nsdcore_id_ood_tests',
-	'predicted_fmri', 'zscore-'+str(args.zscore), 'model-'+args.model)
+	'predicted_fmri', 'data_ood_selection-'+args.data_ood_selection, 'model-'+
+	args.model, 'layer-'+args.layer)
 if os.path.isdir(save_dir) == False:
 	os.makedirs(save_dir)
 
