@@ -6,7 +6,7 @@ Alessandro T. Gifford, Radoslaw M. Cichy, Thomas Naselaris, Kendrick Kay
 
 
 
-## 📄 Paper abstract
+## 📜 Paper abstract
 
 Large-scale visual neural datasets such as the Natural Scenes Dataset (NSD) are enabling models of the brain with performances beyond what was possible just a decade ago. However, because the stimuli of these datasets typically live within a common naturalistic visual distribution, they make it challenging to implement out-of-distribution (OOD) generalization tests crucial for the development of robust brain models. Here, we address this by releasing NSD-synthetic, a dataset of 7T fMRI responses from the same eight NSD participants for 284 synthetic images. We show that NSD-synthetic's fMRI responses reliably encode stimulus-related information and are OOD with respect to NSD; that OOD generalization tests on NSD-synthetic reveal differences between brain models that are not detected in-distribution; and that the degree of OOD (quantified as the test data distance from the training data) is predictive of the magnitude of model failures. Together, NSD-synthetic enables OOD generalization tests that facilitate the development of more robust models of visual processing.
 
