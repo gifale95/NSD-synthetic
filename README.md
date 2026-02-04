@@ -1,5 +1,7 @@
 # A 7T fMRI dataset of synthetic images for out-of-distribution modeling of vision
 
+![Figure 1](figure_1.jpg)
+
 Here we provide the code to reproduce all results from the paper:</br>
 "[A 7T fMRI dataset of synthetic images for out-of-distribution modeling of vision](https://doi.org/10.48550/arXiv.2503.06286)".</br>
 Alessandro T. Gifford, Radoslaw M. Cichy, Thomas Naselaris, Kendrick Kay
