@@ -197,7 +197,7 @@ for sub in tqdm(args.subjects):
 	lh_ncsnr_nsdsynthetic = metadata_nsdsynthetic['lh_ncsnr']
 	rh_ncsnr_nsdsynthetic = metadata_nsdsynthetic['rh_ncsnr']
 
-        # Convert the ncsnr to noise ceiling
+    # Convert the ncsnr to noise ceiling
 	img_reps_2 = 236
 	img_reps_4 = 32
 	img_reps_8 = 8
