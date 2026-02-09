@@ -1,7 +1,7 @@
 # A 7T fMRI dataset of synthetic images for out-of-distribution modeling of vision
 
 Here we provide the code to reproduce all results from the paper:</br>
-"[A 7T fMRI dataset of synthetic images for out-of-distribution modeling of vision](https://doi.org/10.48550/arXiv.2503.06286)".</br>
+"[A 7T fMRI dataset of synthetic images for out-of-distribution modeling of vision](https://doi.org/10.1038/s41467-026-69345-9)".</br>
 Alessandro T. Gifford, Radoslaw M. Cichy, Thomas Naselaris, Kendrick Kay
 
 ![Figure 1](figure_1.jpg)
@@ -77,5 +77,5 @@ If you experience problems with the code submit an issue, or get in touch with A
 ## 📜 Citation
 If you use any of our data or code, please cite:
 
-> * Gifford AT, Cichy RM, Naselaris T, Kay K. 2025. A 7T fMRI dataset of synthetic images for out-of-distribution modeling of vision. _Nature Communications_, DOI: []()
+> * Gifford AT, Cichy RM, Naselaris T, Kay K. 2025. A 7T fMRI dataset of synthetic images for out-of-distribution modeling of vision. _Nature Communications_, DOI: [https://doi.org/10.1038/s41467-026-69345-9](https://doi.org/10.1038/s41467-026-69345-9)
 > * Allen EJ, St-Yves G, Wu Y, Breedlove JL, Prince JS, Dowdle LT, Nau M, Caron B, Pestilli F, Charest I, Hutchinson BJ, Naselaris T, Kay K. 2022. A massive 7T fMRI dataset to bridge cognitive neuroscience and artificial intelligence. _Nature neuroscience_, 25(1), 116-126. DOI: [https://doi.org/10.1038/s41593-021-00962-x](https://doi.org/10.1038/s41593-021-00962-x)
