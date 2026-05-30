@@ -34,7 +34,7 @@ First, create an [Anaconda](https://docs.conda.io/projects/conda/en/latest/user-
 conda create -n nsdsynthetic_env python=3.9
 ```
 
-Next, download the [requirements.txt][requirements] file, navigate with your terminal to the download directory, and activate the Anaconda environment previously created with:
+Next, download the [requirements.txt](https://github.com/gifale95/NSD-synthetic/blob/main/requirements.txt) file, navigate with your terminal to the download directory, and activate the Anaconda environment previously created with:
 
 ```shell
 source activate nsdsynthetic_env
