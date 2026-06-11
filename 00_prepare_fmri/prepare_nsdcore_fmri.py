@@ -81,7 +81,7 @@ img_presentation_order = subjectim[args.subject-1,masterordering[0]][:tot_images
 # Divide the image conditions into train and test splits
 # =============================================================================
 # The train split consists of the fMRI reponses for the (up to) 9,000 subject-
-# unique images. The test split consists of the fMRI responses for 284 NSD-core
+# unique images. The test split consists of the fMRI responses for 515 NSD-core
 # shared images that all subjects saw for three times.
 if args.train_test_session_control == 0:
 
